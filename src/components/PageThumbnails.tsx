@@ -18,8 +18,11 @@ export default function PageThumbnails({ pdfBytes, pageOrder, setPageOrder, curr
   const file = useMemo(() => ({ data }), [data])
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      // Treat small pointer movement as a click; require a small drag distance to activate DnD
-      activationConstraint: { distance: 5 }
+      activationConstraint: { 
+        distance: 10,
+        delay: 100,
+        tolerance: 5
+      }
     })
   )
 
@@ -69,24 +72,30 @@ type SortableThumbProps = {
 }
 
 const SortableThumb: FC<SortableThumbProps> = ({ id, isActive, onClick, children }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id,
+    transition: {
+      duration: 150,
+      easing: 'ease'
+    }
+  })
+  
   const style: CSSProperties = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
+    position: 'relative',
+    cursor: isDragging ? 'grabbing' : 'pointer',
+    userSelect: 'none',
+    zIndex: isDragging ? 1 : 'auto'
   }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className={`rounded border ${isActive ? 'border-primary-500 ring-2 ring-primary-200' : 'border-slate-300 dark:border-slate-700'} bg-white/70 dark:bg-slate-900/50 cursor-pointer overflow-hidden ${isDragging ? 'opacity-80' : ''}`}
-      role="button"
-      tabIndex={0}
-      onPointerUp={(e) => {
-        // Only treat as a click if we are not dragging
+      className={`rounded border ${isActive ? 'border-primary-500 ring-2 ring-primary-200' : 'border-slate-300 dark:border-slate-700'} bg-white/70 dark:bg-slate-900/50 overflow-hidden`}
+      onClick={(e) => {
         if (!isDragging) {
-          e.stopPropagation()
           onClick()
         }
       }}
@@ -96,7 +105,14 @@ const SortableThumb: FC<SortableThumbProps> = ({ id, isActive, onClick, children
           onClick()
         }
       }}
+      {...attributes}
+      {...listeners}
     >
+      <div className="absolute top-1 right-1 p-1 rounded bg-white/80 dark:bg-slate-800/80 cursor-grab active:cursor-grabbing z-10">
+        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" className="text-slate-500 dark:text-slate-400">
+          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+        </svg>
+      </div>
       {children}
       <div className="px-2 py-1 text-xs text-center text-slate-600 dark:text-slate-300">Page {id + 1}</div>
     </div>
