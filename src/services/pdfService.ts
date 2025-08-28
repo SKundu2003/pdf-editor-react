@@ -38,18 +38,62 @@ export async function reorderPages(pdfBytes: Uint8Array, order: number[]): Promi
 export async function addTextAnnotations(pdfBytes: Uint8Array, annotations: TextAnnotation[]): Promise<Uint8Array> {
   if (annotations.length === 0) return pdfBytes
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
-  const font = await doc.embedFont(StandardFonts.Helvetica)
+
+  // Load fonts for different styles
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold)
+  const helveticaOblique = await doc.embedFont(StandardFonts.HelveticaOblique)
+  const helveticaBoldOblique = await doc.embedFont(StandardFonts.HelveticaBoldOblique)
 
   for (const ann of annotations) {
-    const page = doc.getPage(ann.pageIndex)
-    const { r, g, b } = hexToRgb(ann.style.color)
-    page.drawText(ann.text, {
-      x: ann.x,
-      y: ann.y,
-      size: ann.style.fontSize,
-      color: rgb(r, g, b),
-      font,
-    })
+    // Skip if required fields are missing
+    if (ann.x === undefined || ann.y === undefined || ann.text === undefined || ann.style === undefined) {
+      console.warn('Skipping annotation with missing required fields', ann)
+      continue
+    }
+
+    try {
+      // PDF-lib uses 0-based page indices; our ann.pageNumber is 1-based in the app
+      const pageIndex = (ann.pageNumber || 1) - 1
+      const page = doc.getPage(pageIndex)
+      const { r, g, b } = hexToRgb(ann.style.color || '#000000')
+      const formats = new Set(ann.formats || [])
+      const fontSize = ann.style.fontSize || 12
+
+      // Choose font
+      let font = helvetica
+      if (formats.has('bold') && formats.has('italic')) {
+        font = helveticaBoldOblique
+      } else if (formats.has('bold')) {
+        font = helveticaBold
+      } else if (formats.has('italic')) {
+        font = helveticaOblique
+      }
+
+      // Underline (drawn manually)
+      if (formats.has('underline')) {
+        const textWidth = font.widthOfTextAtSize(ann.text, fontSize)
+        // approximate underline y offset slightly below text baseline
+        const underlineY = ann.y - (fontSize * 0.12)
+        page.drawLine({
+          start: { x: ann.x, y: underlineY },
+          end: { x: ann.x + textWidth, y: underlineY },
+          thickness: Math.max(0.5, fontSize * 0.06),
+          color: rgb(r, g, b)
+        })
+      }
+
+      // Draw the text (x,y are PDF points; origin bottom-left)
+      page.drawText(ann.text, {
+        x: ann.x,
+        y: ann.y,
+        size: fontSize,
+        font,
+        color: rgb(r, g, b)
+      })
+    } catch (error) {
+      console.error('Error adding text annotation:', error, ann)
+    }
   }
   return await doc.save()
 }

@@ -5,10 +5,15 @@ export type TextStyle = {
   color: string // hex like #000000
 }
 
+export type TextFormat = 'bold' | 'italic' | 'underline'
+
 export type TextAnnotation = {
-  pageIndex: number
-  text: string
-  x: number // PDF points from left
-  y: number // PDF points from bottom
-  style: TextStyle
+  id?: string
+  x?: number 
+  y?: number 
+  text?: string
+  style?: TextStyle
+  formats?: TextFormat[]
+  pageNumber?: number
+  type?: 'text' | 'image' | 'signature'
 }

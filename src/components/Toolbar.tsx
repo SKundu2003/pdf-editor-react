@@ -39,16 +39,85 @@ export default function Toolbar({
 }: ToolbarProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      onOpenFiles(Array.from(files))
+      // Reset the input value to allow selecting the same file again
+      if (inputRef.current) {
+        inputRef.current.value = ''
+      }
+    }
+  }
+
   return (
     <div className="w-full border-b border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 backdrop-blur sticky top-16 z-30">
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <button 
-            className="px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800" 
-            onClick={()=> inputRef.current?.click()}
-          >
-            Open PDFs
-          </button>
+          <div className="relative">
+            <input
+              type="file"
+              ref={inputRef}
+              className="hidden"
+              accept=".pdf,application/pdf"
+              multiple
+              onChange={handleFileChange}
+            />
+            <button
+              className="px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              onClick={() => inputRef.current?.click()}
+            >
+              Open PDFs
+            </button>
+
+            <button
+              className={`px-3 py-2 rounded-md border ${mode === 'text' ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              onClick={() => setMode(mode === 'text' ? 'select' : 'text')}
+              title={mode === 'text' ? 'Switch to select mode (Esc)' : 'Switch to text mode'}
+            >
+              {mode === 'text' ? 'Select Mode' : 'Text Mode'}
+            </button>
+
+            {mode === 'text' && (
+              <div className="absolute left-0 mt-1 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg z-10 flex items-center gap-1">
+                <div className="flex items-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1">
+                  <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => setTextColor(e.target.value)}
+                    className="w-6 h-6 cursor-pointer bg-transparent border-0 appearance-none"
+                    title="Text color"
+                  />
+                  <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
+                    {textSize}px
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => setTextSize(Math.max(8, textSize - 1))}
+                  title="Decrease font size"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => setTextSize(Math.min(72, textSize + 1))}
+                  title="Increase font size"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+
           {onClearAll && (
             <button
               onClick={onClearAll}
@@ -59,19 +128,6 @@ export default function Toolbar({
             </button>
           )}
         </div>
-        
-        <input 
-          ref={inputRef} 
-          type="file" 
-          accept="application/pdf" 
-          multiple 
-          hidden 
-          onChange={(e)=>{
-            if (!e.target.files) return
-            onOpenFiles(Array.from(e.target.files))
-            e.currentTarget.value = ''
-          }} 
-        />
 
         <div className="h-6 w-px bg-slate-300/80 dark:bg-slate-700/80" />
         <div className="inline-flex rounded-md border border-slate-300 dark:border-slate-700 overflow-hidden">

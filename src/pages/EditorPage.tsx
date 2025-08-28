@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import Toolbar from '../components/Toolbar'
@@ -6,7 +6,8 @@ import PdfViewer from '../components/PdfViewer'
 import PageThumbnails from '../components/PageThumbnails'
 import UploadDropzone from '../components/UploadDropzone'
 import { usePdfState } from '../hooks/usePdfState'
-import type { AnnotationMode, TextAnnotation } from '../types/pdf'
+type AnnotationMode = 'select' | 'text'
+import type { TextAnnotation, TextFormat } from '../types/pdf'
 import { downloadBytesAsFile } from '../utils/download'
 
 export default function EditorPage(){
@@ -37,8 +38,49 @@ export default function EditorPage(){
   const [textColor, setTextColor] = useState('#111827')
   const [textSize, setTextSize] = useState(14)
   const [error, setError] = useState<string | null>(null)
-
-  // Load files from landing page navigation (guarded to avoid StrictMode double-call)
+  
+  // Handle adding new text annotations
+  const handleTextAdd = useCallback((ann: TextAnnotation) => {
+    try {
+      // Ensure required fields are present
+      if (ann.x === undefined || ann.y === undefined || ann.text === undefined) {
+        console.warn('Missing required fields in text annotation:', ann)
+        return
+      }
+      
+      addText({
+        ...ann,
+        id: ann.id || `text-${Date.now()}`,
+        pageNumber: ann.pageNumber || pageNumber,
+        style: {
+          color: textColor,
+          fontSize: textSize
+        },
+        formats: ann.formats || []
+      })
+    } catch (error) {
+      console.error('Error adding text annotation:', error)
+      setError('Failed to add text annotation')
+    }
+  }, [addText, pageNumber, textColor, textSize])
+  
+  // Update document title based on mode
+  useEffect(() => {
+    document.title = mode === 'text' ? 'PDF Editor - Text Mode' : 'PDF Editor'
+  }, [mode])
+  
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle text mode with Escape key
+      if (e.key === 'Escape' && mode === 'text') {
+        setMode('select')
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [mode])
   const loadedNavKeyRef = useRef<string | null>(null)
   useEffect(() => {
     const files = (location?.state?.files as File[] | undefined) || undefined
@@ -67,25 +109,27 @@ export default function EditorPage(){
     removePdf(id)
   }
 
+  const handleOpenFiles = async (files: File[]) => {
+    setError(null)
+    try {
+      await loadFromFiles(files)
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load files')
+    }
+  }
+
   return (
     <div className="min-h-[calc(100vh-8rem)]">
       <Toolbar
-        onOpenFiles={async (files) => {
-          setError(null)
-          try {
-            await loadFromFiles(files)
-          } catch (e: any) {
-            setError(e?.message || 'Failed to load files')
-          }
-        }}
+        onOpenFiles={handleOpenFiles}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onResetZoom={resetZoom}
         pageNumber={pageNumber}
         numPages={numPages}
         setPageNumber={setPageNumber}
-        mode={mode as any}
-        setMode={setMode as any}
+        mode={mode}
+        setMode={setMode}
         textColor={textColor}
         setTextColor={setTextColor}
         textSize={textSize}
@@ -100,18 +144,42 @@ export default function EditorPage(){
         <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex flex-wrap gap-2 mb-2">
             {loadedPdfs.map((pdf) => (
-              <div
-                key={pdf.id}
-                className="flex items-center bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800"
-              >
-                <span className="truncate max-w-xs">{pdf.name}</span>
-                <button
-                  onClick={(e) => handleRemovePdf(pdf.id, e)}
-                  className="ml-2 text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100"
-                  title="Remove PDF"
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <button
+                      className={`px-3 py-1 rounded-md border ${mode === 'select' 
+                        ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700' 
+                        : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                      onClick={() => setMode('select')}
+                    >
+                      Select Mode
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <button
+                      className={`px-3 py-1 rounded-md border ${mode === 'text' 
+                        ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700' 
+                        : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                      onClick={() => setMode('text')}
+                    >
+                      Text Mode
+                    </button>
+                  </div>
+                </div>
+                <div
+                  key={pdf.id}
+                  className="flex items-center bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800"
                 >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+                  <span className="truncate max-w-xs">{pdf.name}</span>
+                  <button
+                    onClick={(e) => handleRemovePdf(pdf.id, e)}
+                    className="ml-2 text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100"
+                    title="Remove PDF"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -156,10 +224,10 @@ export default function EditorPage(){
               pageNumber={pageNumber}
               scale={scale}
               onDocumentLoad={onDocumentLoad}
-              mode={mode as any}
+              mode={mode}
               textColor={textColor}
               textSize={textSize}
-              onCommitText={(ann)=> addText(ann)}
+              onCommitText={handleTextAdd}
               previewAnnotations={previewAnnotations}
             />
           </section>

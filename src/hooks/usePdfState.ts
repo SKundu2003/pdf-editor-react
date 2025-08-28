@@ -79,8 +79,18 @@ export function usePdfState() {
 
   const canExport = useMemo(() => !!mergedPdf && numPages > 0, [mergedPdf, numPages])
 
-  const addText = useCallback((ann: TextAnnotation) => {
-    setAnnotations(prev => [...prev, ann])
+  // Function to add a text annotation
+  const addText = useCallback((annotation: TextAnnotation) => {
+    setAnnotations(prev => {
+      // Update existing annotation if it has the same ID, otherwise add new one
+      const existingIndex = prev.findIndex(a => a.id === annotation.id)
+      if (existingIndex >= 0) {
+        const updated = [...prev]
+        updated[existingIndex] = annotation
+        return updated
+      }
+      return [...prev, annotation]
+    })
   }, [])
 
   const updateOrder = useCallback((newOrder: number[]) => {

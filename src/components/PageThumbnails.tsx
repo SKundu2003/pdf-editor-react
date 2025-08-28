@@ -16,7 +16,12 @@ export default function PageThumbnails({ pdfBytes, pageOrder, setPageOrder, curr
   // Memoize data and file once per pdfBytes change
   const data = useMemo(() => new Uint8Array(pdfBytes), [pdfBytes])
   const file = useMemo(() => ({ data }), [data])
-  const sensors = useSensors(useSensor(PointerSensor))
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      // Treat small pointer movement as a click; require a small drag distance to activate DnD
+      activationConstraint: { distance: 5 }
+    })
+  )
 
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -42,7 +47,7 @@ export default function PageThumbnails({ pdfBytes, pageOrder, setPageOrder, curr
                 <SortableThumb
                   key={pageIndex}
                   id={pageIndex}
-                  isActive={currentPage - 1 === pageIndex}
+                  isActive={currentPage === pageIndex + 1}
                   onClick={() => onSelectPage(pageIndex + 1)}
                 >
                   <Page pageNumber={pageIndex + 1} width={140} renderAnnotationLayer={false} renderTextLayer={false} />
@@ -76,7 +81,21 @@ const SortableThumb: FC<SortableThumbProps> = ({ id, isActive, onClick, children
       {...attributes}
       {...listeners}
       className={`rounded border ${isActive ? 'border-primary-500 ring-2 ring-primary-200' : 'border-slate-300 dark:border-slate-700'} bg-white/70 dark:bg-slate-900/50 cursor-pointer overflow-hidden ${isDragging ? 'opacity-80' : ''}`}
-      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onPointerUp={(e) => {
+        // Only treat as a click if we are not dragging
+        if (!isDragging) {
+          e.stopPropagation()
+          onClick()
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
     >
       {children}
       <div className="px-2 py-1 text-xs text-center text-slate-600 dark:text-slate-300">Page {id + 1}</div>
