@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Key, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { isAdobeAPIConfigured } from '../../services/adobeAPI'
+import { cn } from '../../lib/utils'
 
 interface APIKeyDialogProps {
   isOpen: boolean
@@ -103,33 +104,6 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
                   Continue
                 </Button>
               )}
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-              </p>
-              <a
-                href="https://developer.adobe.com/document-services/apis/pdf-services/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Get your free Adobe PDF Services API key
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1">
-                Continue
-              </Button>
             </div>
           </form>
         </div>
