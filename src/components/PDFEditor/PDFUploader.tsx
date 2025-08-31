@@ -24,6 +24,7 @@ export default function PDFUploader() {
     selectAllFiles,
     deselectAllFiles,
     mergeSelectedFiles,
+    mergeSelectedFiles,
     generatePageOrder
   } = useEditorStore()
   const { addToast } = useToast()
@@ -272,7 +273,7 @@ export default function PDFUploader() {
             {isDragReject 
               ? 'Please upload valid PDF files only'
               : 'Drag and drop your PDF files here, or click to browse'
-            Drag and drop PDF files here, or click to browse
+            }
           </p>
           
           <Button variant="outline" size="sm">
