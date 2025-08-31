@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { FileText, GripVertical } from 'lucide-react'
 import { useEditorStore } from '../../store/editorStore'
 import { cn } from '../../utils/cn'
+import { cn } from '../../utils/cn'
 import type { PageInfo } from '../../types/editor'
 
 export default function PageReorder() {
