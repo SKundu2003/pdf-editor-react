@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Key, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { isAdobeAPIConfigured } from '../../services/adobeAPI'
-import { cn } from '../../lib/utils'
+import { cn } from '../../utils/cn'
 
 interface APIKeyDialogProps {
   isOpen: boolean

@@ -151,7 +151,7 @@ export default function MainEditor() {
               <>
                 <span>•</span>
                 <FileText className="h-4 w-4" />
-                {currentPdf.name}
+                <span>{currentPdf.name}</span>
               </>
             )}
           </div>
