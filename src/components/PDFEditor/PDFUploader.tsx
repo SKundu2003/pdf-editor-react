@@ -5,7 +5,7 @@ import { Button } from '../UI/Button'
 import { Progress } from '../UI/Progress'
 import { useToast } from '../UI/Toast'
 import { useEditorStore } from '../../store/editorStore'
-import { DragDropContext, Droppable, Draggable } from '@dnd-kit/core'
+import { DndContext, useDroppable, useDraggable } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -223,26 +223,21 @@ export default function PDFUploader() {
 
         {/* File List */}
         <div className="space-y-2 max-h-96 overflow-auto">
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="pdf-files">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {uploadedFiles.map((file, index) => (
-                    <FileItem
-                      key={file.id}
-                      file={file}
-                      index={index}
-                      isSelected={selectedFiles.includes(file.id)}
-                      onToggleSelect={() => toggleFileSelection(file.id)}
-                      onRemove={() => removePdf(file.id)}
-                      onEdit={() => setCurrentPdf(file)}
-                    />
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext onDragEnd={handleDragEnd}>
+            <SortableContext items={uploadedFiles.map(f => f.id)} strategy={verticalListSortingStrategy}>
+              {uploadedFiles.map((file, index) => (
+                <FileItem
+                  key={file.id}
+                  file={file}
+                  index={index}
+                  isSelected={selectedFiles.includes(file.id)}
+                  onToggleSelect={() => toggleFileSelection(file.id)}
+                  onRemove={() => removePdf(file.id)}
+                  onEdit={() => setCurrentPdf(file)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Upload More Button */}
@@ -325,76 +320,86 @@ function FileItem({
   onRemove: () => void
   onEdit: () => void
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: file.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   return (
-    <Draggable key={file.id} draggableId={file.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className={cn(
-            'flex items-center gap-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all',
-            isSelected && 'ring-2 ring-primary-500 border-primary-500',
-            snapshot.isDragging && 'shadow-lg scale-105'
-          )}
-        >
-          {/* Drag Handle */}
-          <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
-            <div className="w-2 h-6 flex flex-col justify-center gap-1">
-              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
-              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
-              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
-            </div>
-          </div>
-
-          {/* Selection Checkbox */}
-          <button onClick={onToggleSelect} className="flex-shrink-0">
-            {isSelected ? (
-              <CheckSquare className="h-5 w-5 text-primary-600" />
-            ) : (
-              <Square className="h-5 w-5 text-slate-400 hover:text-slate-600" />
-            )}
-          </button>
-
-          {/* File Icon */}
-          <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-
-          {/* File Info */}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium truncate" title={file.name}>{file.name}</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {(file.size / 1024 / 1024).toFixed(1)} MB
-              {file.pageCount > 0 && ` • ${file.pageCount} pages`}
-            </p>
-            
-            {/* Upload Progress */}
-            {file.status === 'uploading' && (
-              <div className="mt-2">
-                <Progress value={file.uploadProgress} className="h-1" />
-              </div>
-            )}
-            
-            {/* Error Display */}
-            {file.status === 'error' && (
-              <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-400">
-                <AlertCircle className="h-3 w-3" />
-                <span className="text-xs">{file.error}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1">
-            {file.status === 'ready' && (
-              <Button variant="ghost" size="sm" onClick={onEdit}>
-                Edit
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={onRemove}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-center gap-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all',
+        isSelected && 'ring-2 ring-primary-500 border-primary-500',
+        isDragging && 'shadow-lg scale-105'
       )}
-    </Draggable>
+    >
+      {/* Drag Handle */}
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+        <div className="w-2 h-6 flex flex-col justify-center gap-1">
+          <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+          <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+          <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+        </div>
+      </div>
+
+      {/* Selection Checkbox */}
+      <button onClick={onToggleSelect} className="flex-shrink-0">
+        {isSelected ? (
+          <CheckSquare className="h-5 w-5 text-primary-600" />
+        ) : (
+          <Square className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+        )}
+      </button>
+
+      {/* File Icon */}
+      <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+
+      {/* File Info */}
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium truncate" title={file.name}>{file.name}</h4>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {(file.size / 1024 / 1024).toFixed(1)} MB
+          {file.pageCount > 0 && ` • ${file.pageCount} pages`}
+        </p>
+        
+        {/* Upload Progress */}
+        {file.status === 'uploading' && (
+          <div className="mt-2">
+            <Progress value={file.uploadProgress} className="h-1" />
+          </div>
+        )}
+        
+        {/* Error Display */}
+        {file.status === 'error' && (
+          <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-400">
+            <AlertCircle className="h-3 w-3" />
+            <span className="text-xs">{file.error}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-1">
+        {file.status === 'ready' && (
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            Edit
+          </Button>
+        )}
+        <Button variant="ghost" size="icon" onClick={onRemove}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   )
 }
