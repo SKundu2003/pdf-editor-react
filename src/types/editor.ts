@@ -68,3 +68,16 @@ export interface DocumentMetadata {
   creationDate?: Date
   modificationDate?: Date
 }
+
+export type PageInfo = {
+  id: string
+  fileId: string
+  fileName: string
+  pageNumber: number
+  globalIndex: number
+}
+
+export type PageOrder = {
+  pages: PageInfo[]
+  totalPages: number
+}

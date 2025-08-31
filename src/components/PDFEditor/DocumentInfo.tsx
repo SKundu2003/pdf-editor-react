@@ -4,7 +4,7 @@ import { useEditorStore } from '../../store/editorStore'
 import { formatFileSize, formatDate } from '../../utils/format'
 
 export default function DocumentInfo() {
-  const { currentPdf, uploadedFiles, mergedPdf, hasUnsavedChanges } = useEditorStore()
+  const { currentPdf, uploadedFiles, mergedPdf, hasUnsavedChanges, pageOrder } = useEditorStore()
 
   if (!currentPdf && uploadedFiles.length === 0) {
     return (
@@ -96,7 +96,7 @@ export default function DocumentInfo() {
           <div className="flex justify-between">
             <span className="text-slate-600 dark:text-slate-400">Total Pages:</span>
             <span className="font-medium">
-              {uploadedFiles.reduce((sum, f) => sum + f.pageCount, 0)}
+              {pageOrder?.totalPages || uploadedFiles.reduce((sum, f) => sum + f.pageCount, 0)}
             </span>
           </div>
           
@@ -146,7 +146,7 @@ export default function DocumentInfo() {
         <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Quick Tips</h4>
         <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
           <li>• Upload multiple PDFs and merge them</li>
-          <li>• Drag files to reorder before merging</li>
+          <li>• Drag pages to reorder across all PDFs</li>
           <li>• Use Ctrl+S to save changes</li>
           <li>• Use Ctrl+Z/Y for undo/redo</li>
           <li>• Export when finished to download</li>

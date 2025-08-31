@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { PDFFile, MergedPDF, ConvertedContent, EditorState, APIProgress } from '../types/editor'
+import type { PDFFile, MergedPDF, ConvertedContent, EditorState, APIProgress, PageInfo, PageOrder } from '../types/editor'
 import { getAdobeAPI } from '../services/adobeAPI'
+import { PDFPageService } from '../services/pdfPageService'
 
 interface EditorStore extends EditorState {
   // PDF Management
@@ -103,6 +104,15 @@ export const useEditorStore = create<EditorStore>()(
           }))
         }
       }
+      
+      // Generate page order after all files are processed
+      setTimeout(() => {
+        const state = get()
+        const allReady = state.uploadedFiles.every(f => f.status === 'ready' || f.status === 'error')
+        if (allReady) {
+          state.generatePageOrder()
+        }
+      }, 500)
     },
     
     removePdf: (id: string) => {
@@ -178,32 +188,53 @@ export const useEditorStore = create<EditorStore>()(
     
     mergeSelectedFiles: async () => {
       const state = get()
-      const selectedFiles = state.uploadedFiles.filter(f => 
-        state.selectedFiles.includes(f.id) && f.status === 'ready'
-      )
       
-      if (selectedFiles.length < 2) {
+      let filesToMerge: PDFFile[]
+      
+      if (state.pageOrder && state.pageOrder.pages.length > 0) {
+        // Use page order for merging
+        const uniqueFileIds = [...new Set(state.pageOrder.pages.map(p => p.fileId))]
+        filesToMerge = state.uploadedFiles.filter(f => 
+          uniqueFileIds.includes(f.id) && f.status === 'ready'
+        )
+      } else {
+        // Fallback to selected files
+        filesToMerge = state.uploadedFiles.filter(f => 
+          state.selectedFiles.includes(f.id) && f.status === 'ready'
+        )
+      }
+      
+      if (filesToMerge.length < 1) {
         throw new Error('Please select at least 2 files to merge')
       }
       
       const mergedPdf: MergedPDF = {
         id: Math.random().toString(36).substring(2, 9),
-        name: `Merged_${selectedFiles.length}_files.pdf`,
-        files: selectedFiles,
-        pageCount: selectedFiles.reduce((sum, f) => sum + f.pageCount, 0),
+        name: `Merged_${filesToMerge.length}_files.pdf`,
+        files: filesToMerge,
+        pageCount: state.pageOrder?.totalPages || filesToMerge.reduce((sum, f) => sum + f.pageCount, 0),
         status: 'merging'
       }
       
       set({ mergedPdf })
       
       try {
-        const api = getAdobeAPI()
-        const bytes = await api.mergePdfs(
-          selectedFiles.map(f => f.file),
-          (progress) => {
-            // Progress updates handled by components
-          }
-        )
+        let bytes: Uint8Array
+        
+        if (state.pageOrder && state.pageOrder.pages.length > 0) {
+          // Create PDF with custom page order
+          const { pdfDocuments } = await PDFPageService.extractAllPages(filesToMerge)
+          bytes = await PDFPageService.createReorderedPDF(state.pageOrder.pages, pdfDocuments)
+        } else {
+          // Standard merge
+          const api = getAdobeAPI()
+          bytes = await api.mergePdfs(
+            filesToMerge.map(f => f.file),
+            (progress) => {
+              // Progress updates handled by components
+            }
+          )
+        }
         
         set(state => ({
           mergedPdf: state.mergedPdf ? {

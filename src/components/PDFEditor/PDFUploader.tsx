@@ -11,9 +11,6 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '../../utils/cn'
 
-const MAX_FILE_SIZE = parseInt(import.meta.env.VITE_MAX_FILE_SIZE) || 10 * 1024 * 1024 // 10MB
-const MAX_FILES = parseInt(import.meta.env.VITE_MAX_FILES) || 10
-
 export default function PDFUploader() {
   const { 
     uploadedFiles, 
@@ -36,23 +33,11 @@ export default function PDFUploader() {
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
     setIsDragActive(false)
     
-    // Check file limit
-    if (uploadedFiles.length + acceptedFiles.length > MAX_FILES) {
-      addToast({
-        title: 'Too Many Files',
-        description: `Maximum ${MAX_FILES} files allowed`,
-        variant: 'destructive'
-      })
-      return
-    }
-    
     // Handle rejected files
     if (rejectedFiles.length > 0) {
       const errors = rejectedFiles.map(({ file, errors }) => {
         const errorMessages = errors.map((e: any) => {
           switch (e.code) {
-            case 'file-too-large':
-              return `File "${file.name}" is too large (max 10MB)`
             case 'file-invalid-type':
               return `File "${file.name}" is not a PDF`
             default:
@@ -87,7 +72,7 @@ export default function PDFUploader() {
         })
       }
     }
-  }, [uploadedFiles.length, uploadPdfs, addToast])
+  }, [uploadPdfs, addToast])
 
   const { getRootProps, getInputProps, isDragReject } = useDropzone({
     onDrop,
@@ -96,7 +81,6 @@ export default function PDFUploader() {
     accept: {
       'application/pdf': ['.pdf']
     },
-    maxSize: MAX_FILE_SIZE,
     multiple: true
   })
 
@@ -248,7 +232,7 @@ export default function PDFUploader() {
           <input {...getInputProps()} />
           <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
             <Upload className="h-4 w-4" />
-            <span className="text-sm">Add more PDFs ({uploadedFiles.length}/{MAX_FILES})</span>
+            <span className="text-sm">Add more PDFs</span>
           </div>
         </div>
       </div>
@@ -287,7 +271,7 @@ export default function PDFUploader() {
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
             {isDragReject 
               ? 'Please upload valid PDF files only'
-              : `Drag and drop your PDF files here, or click to browse (max ${MAX_FILES} files)`
+              : 'Drag and drop your PDF files here, or click to browse'
             }
           </p>
           
@@ -297,7 +281,7 @@ export default function PDFUploader() {
         </div>
         
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          Maximum file size: 10MB per file • PDF format only • Multiple files supported
+          PDF format only • Multiple files supported • No size limit
         </div>
       </div>
     </div>
