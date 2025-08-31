@@ -227,8 +227,6 @@ export const useEditorStore = create<EditorStore>()(
     setCurrentPdf: (pdf) => {
       set({ currentPdf: pdf })
     },
-      }))
-    },
     
     setConvertedContent: (content) => {
       set({ 
