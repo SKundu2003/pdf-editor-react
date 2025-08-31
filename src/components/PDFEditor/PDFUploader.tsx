@@ -24,7 +24,8 @@ export default function PDFUploader() {
     selectAllFiles,
     deselectAllFiles,
     mergeSelectedFiles,
-    setCurrentPdf
+    mergeSelectedFiles,
+    generatePageOrder
   } = useEditorStore()
   const { addToast } = useToast()
   const [isDragActive, setIsDragActive] = useState(false)

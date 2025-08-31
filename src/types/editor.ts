@@ -40,6 +40,7 @@ export interface EditorState {
   apiError: string | null
   selectedFiles: string[]
   draggedFile: string | null
+  pageOrder: PageOrder | null
 }
 
 export interface APIProgress {

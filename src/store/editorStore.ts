@@ -30,6 +30,11 @@ interface EditorStore extends EditorState {
   setEditingMode: (editing: boolean) => void
   setCurrentPdf: (pdf: PDFFile | MergedPDF | null) => void
   resetEditor: () => void
+  
+  // Page Management
+  generatePageOrder: () => Promise<void>
+  generatePageOrder: () => Promise<void>
+  reorderPages: (startIndex: number, endIndex: number) => void
 }
 
 const initialState: EditorState = {
@@ -43,7 +48,8 @@ const initialState: EditorState = {
   apiStatus: 'idle',
   apiError: null,
   selectedFiles: [],
-  draggedFile: null
+  draggedFile: null,
+  pageOrder: null
 }
 
 export const useEditorStore = create<EditorStore>()(
@@ -296,6 +302,66 @@ export const useEditorStore = create<EditorStore>()(
     
     resetEditor: () => {
       set(initialState)
+    },
+    
+    generatePageOrder: async () => {
+      const state = get()
+      const readyFiles = state.uploadedFiles.filter(f => f.status === 'ready')
+      
+      if (readyFiles.length === 0) {
+        set({ pageOrder: null })
+        return
+      }
+      
+      try {
+        const pages: PageInfo[] = []
+        let globalIndex = 0
+        
+        for (const file of readyFiles) {
+          for (let pageNum = 1; pageNum <= file.pageCount; pageNum++) {
+            pages.push({
+              id: `${file.id}-page-${pageNum}`,
+              fileId: file.id,
+              fileName: file.name,
+              pageNumber: pageNum,
+              globalIndex: globalIndex++
+            })
+          }
+        }
+        
+        set({
+          pageOrder: {
+            pages,
+            totalPages: pages.length
+          }
+        })
+      } catch (error) {
+        console.error('Failed to generate page order:', error)
+        set({ pageOrder: null })
+      }
+    },
+    
+    reorderPages: (startIndex: number, endIndex: number) => {
+      set(state => {
+        if (!state.pageOrder) return state
+        
+        const pages = [...state.pageOrder.pages]
+        const [removed] = pages.splice(startIndex, 1)
+        pages.splice(endIndex, 0, removed)
+        
+        // Update global indices
+        const updatedPages = pages.map((page, index) => ({
+          ...page,
+          globalIndex: index
+        }))
+        
+        return {
+          pageOrder: {
+            ...state.pageOrder,
+            pages: updatedPages
+          }
+        }
+      })
     }
   }))
 )
