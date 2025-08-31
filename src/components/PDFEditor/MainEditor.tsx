@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react'
-import { FileText, Download, RefreshCw, Settings } from 'lucide-react'
+import { FileText, Download, RefreshCw, Settings, Layers } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useToast } from '../UI/Toast'
 import { useEditorStore } from '../../store/editorStore'
-import { getAdobeAPI, initializeAdobeAPI } from '../../services/adobeAPI'
+import { getAdobeAPI, initializeAdobeAPI, isAdobeAPIConfigured } from '../../services/adobeAPI'
 import { downloadBytesAsFile } from '../../utils/download'
 import PDFUploader from './PDFUploader'
 import PDFPreview from './PDFPreview'
@@ -16,6 +16,8 @@ import type { APIProgress } from '../../types/editor'
 export default function MainEditor() {
   const {
     currentPdf,
+    uploadedFiles,
+    mergedPdf,
     convertedContent,
     editedContent,
     apiStatus,
@@ -27,12 +29,12 @@ export default function MainEditor() {
   const { addToast } = useToast()
   const [showApiDialog, setShowApiDialog] = useState(false)
   const [apiProgress, setApiProgress] = useState<APIProgress | null>(null)
-  const [isApiConfigured, setIsApiConfigured] = useState(false)
+  const [isApiConfigured, setIsApiConfigured] = useState(isAdobeAPIConfigured())
 
-  const handleApiKeySubmit = useCallback((apiKey: string) => {
+  const handleApiKeySubmit = useCallback(() => {
     try {
-      initializeAdobeAPI(apiKey)
-      setIsApiConfigured(true)
+      initializeAdobeAPI()
+      setIsApiConfigured(isAdobeAPIConfigured())
       addToast({
         title: 'API Configured',
         description: 'Adobe PDF Services is ready to use',
@@ -41,14 +43,23 @@ export default function MainEditor() {
     } catch (error) {
       addToast({
         title: 'Configuration Error',
-        description: 'Failed to configure Adobe API',
+        description: error instanceof Error ? error.message : 'Failed to configure Adobe API',
         variant: 'destructive'
       })
     }
   }, [addToast])
 
   const handleConvertToHtml = useCallback(async () => {
-    if (!currentPdf || !isApiConfigured) {
+    if (!currentPdf) {
+      addToast({
+        title: 'No PDF Selected',
+        description: 'Please select a PDF file to convert',
+        variant: 'destructive'
+      })
+      return
+    }
+    
+    if (!isApiConfigured) {
       setShowApiDialog(true)
       return
     }
@@ -57,10 +68,17 @@ export default function MainEditor() {
     
     try {
       const api = getAdobeAPI()
-      const content = await api.convertPdfToHtml(
-        currentPdf.file,
-        (progress) => setApiProgress(progress)
-      )
+      
+      let fileToConvert: File
+      if ('file' in currentPdf) {
+        fileToConvert = currentPdf.file
+      } else if ('bytes' in currentPdf && currentPdf.bytes) {
+        fileToConvert = new File([currentPdf.bytes], currentPdf.name, { type: 'application/pdf' })
+      } else {
+        throw new Error('No valid PDF file found')
+      }
+      
+      const content = await api.convertPdfToHtml(fileToConvert, (progress) => setApiProgress(progress))
       
       setConvertedContent(content)
       setApiStatus('idle')
@@ -126,7 +144,89 @@ export default function MainEditor() {
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold">PDF Editor</h1>
-          {currentPdf && (
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+            <Layers className="h-4 w-4" />
+            {uploadedFiles.length > 0 && `${uploadedFiles.length} file(s)`}
+            {currentPdf && (
+              <>
+                <span>•</span>
+                <FileText className="h-4 w-4" />
+                {currentPdf.name}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowApiDialog(true)}
+            disabled={apiStatus !== 'idle'}
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            {isApiConfigured ? 'API Ready' : 'Configure API'}
+          </Button>
+
+          {currentPdf && !convertedContent && (
+            <Button
+              onClick={handleConvertToHtml}
+              disabled={apiStatus !== 'idle' || !isApiConfigured}
+              size="sm"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Convert to HTML
+            </Button>
+          )}
+
+          {convertedContent && (
+            <Button
+              onClick={handleExportPdf}
+              disabled={apiStatus !== 'idle'}
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export PDF
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px,1fr,1fr] gap-4 p-4 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="space-y-4 overflow-auto">
+          <PDFUploader />
+          <DocumentInfo />
+        </aside>
+
+        {/* PDF Preview */}
+        <div className="min-h-0">
+          <PDFPreview />
+        </div>
+
+        {/* Text Editor */}
+        <div className="min-h-0">
+          <TextEditor />
+        </div>
+      </div>
+
+      {/* Dialogs and Overlays */}
+      <APIKeyDialog
+        isOpen={showApiDialog}
+        onClose={() => setShowApiDialog(false)}
+        onSubmit={handleApiKeySubmit}
+      />
+
+      {apiProgress && (
+        <ConversionProgress
+          progress={apiProgress}
+          isVisible={apiStatus === 'converting' || apiStatus === 'generating'}
+        />
+      )}
+    </div>
+  )
+}
             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <FileText className="h-4 w-4" />
               {currentPdf.name}

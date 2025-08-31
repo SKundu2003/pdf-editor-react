@@ -1,22 +1,50 @@
 import React, { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, AlertCircle, X } from 'lucide-react'
+import { Upload, FileText, AlertCircle, X, Merge, Trash2, CheckSquare, Square } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { Progress } from '../UI/Progress'
 import { useToast } from '../UI/Toast'
 import { useEditorStore } from '../../store/editorStore'
+import { DragDropContext, Droppable, Draggable } from '@dnd-kit/core'
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '../../utils/cn'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ACCEPTED_TYPES = ['application/pdf']
+const MAX_FILE_SIZE = parseInt(import.meta.env.VITE_MAX_FILE_SIZE) || 10 * 1024 * 1024 // 10MB
+const MAX_FILES = parseInt(import.meta.env.VITE_MAX_FILES) || 10
 
 export default function PDFUploader() {
-  const { currentPdf, uploadPdf, removePdf } = useEditorStore()
+  const { 
+    uploadedFiles, 
+    selectedFiles, 
+    mergedPdf,
+    uploadPdfs, 
+    removePdf, 
+    removeAllPdfs,
+    reorderFiles,
+    toggleFileSelection,
+    selectAllFiles,
+    deselectAllFiles,
+    mergeSelectedFiles,
+    setCurrentPdf
+  } = useEditorStore()
   const { addToast } = useToast()
   const [isDragActive, setIsDragActive] = useState(false)
+  const [isMerging, setIsMerging] = useState(false)
 
   const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
     setIsDragActive(false)
+    
+    // Check file limit
+    if (uploadedFiles.length + acceptedFiles.length > MAX_FILES) {
+      addToast({
+        title: 'Too Many Files',
+        description: `Maximum ${MAX_FILES} files allowed`,
+        variant: 'destructive'
+      })
+      return
+    }
     
     // Handle rejected files
     if (rejectedFiles.length > 0) {
@@ -42,14 +70,13 @@ export default function PDFUploader() {
       return
     }
 
-    // Process accepted files (only take the first one for now)
+    // Process accepted files
     if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0]
       try {
-        await uploadPdf(file)
+        await uploadPdfs(acceptedFiles)
         addToast({
-          title: 'PDF Uploaded',
-          description: `"${file.name}" is ready for editing`,
+          title: 'PDFs Uploaded',
+          description: `${acceptedFiles.length} file(s) uploaded successfully`,
           variant: 'success'
         })
       } catch (error) {
@@ -60,7 +87,7 @@ export default function PDFUploader() {
         })
       }
     }
-  }, [uploadPdf, addToast])
+  }, [uploadedFiles.length, uploadPdfs, addToast])
 
   const { getRootProps, getInputProps, isDragReject } = useDropzone({
     onDrop,
@@ -70,52 +97,165 @@ export default function PDFUploader() {
       'application/pdf': ['.pdf']
     },
     maxSize: MAX_FILE_SIZE,
-    multiple: false
+    multiple: true
   })
 
-  const handleRemove = () => {
-    removePdf()
+  const handleMergeSelected = async () => {
+    if (selectedFiles.length < 2) {
+      addToast({
+        title: 'Selection Required',
+        description: 'Please select at least 2 files to merge',
+        variant: 'destructive'
+      })
+      return
+    }
+    
+    setIsMerging(true)
+    try {
+      await mergeSelectedFiles()
+      addToast({
+        title: 'Files Merged',
+        description: 'PDFs have been merged successfully',
+        variant: 'success'
+      })
+    } catch (error) {
+      addToast({
+        title: 'Merge Failed',
+        description: error instanceof Error ? error.message : 'Failed to merge files',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsMerging(false)
+    }
+  }
+
+  const handleRemoveAll = () => {
+    removeAllPdfs()
     addToast({
-      title: 'PDF Removed',
-      description: 'You can upload a new PDF to continue editing',
+      title: 'All Files Removed',
+      description: 'You can upload new PDFs to continue',
       variant: 'default'
     })
   }
 
-  if (currentPdf) {
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event
+    
+    if (active.id !== over?.id) {
+      const oldIndex = uploadedFiles.findIndex(f => f.id === active.id)
+      const newIndex = uploadedFiles.findIndex(f => f.id === over.id)
+      reorderFiles(oldIndex, newIndex)
+    }
+  }
+
+  if (uploadedFiles.length > 0) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex items-center gap-3">
-            <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-            <div>
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100">{currentPdf.name}</h3>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                {(currentPdf.size / 1024 / 1024).toFixed(1)} MB • {currentPdf.pageCount} pages
-              </p>
-            </div>
+        {/* File Management Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={selectedFiles.length === uploadedFiles.length ? deselectAllFiles : selectAllFiles}
+            >
+              {selectedFiles.length === uploadedFiles.length ? (
+                <CheckSquare className="h-4 w-4 mr-1" />
+              ) : (
+                <Square className="h-4 w-4 mr-1" />
+              )}
+              {selectedFiles.length > 0 ? `${selectedFiles.length} selected` : 'Select All'}
+            </Button>
+            
+            {selectedFiles.length >= 2 && (
+              <Button 
+                size="sm" 
+                onClick={handleMergeSelected}
+                disabled={isMerging}
+              >
+                <Merge className="h-4 w-4 mr-1" />
+                {isMerging ? 'Merging...' : 'Merge Selected'}
+              </Button>
+            )}
           </div>
-          <Button variant="ghost" size="icon" onClick={handleRemove}>
-            <X className="h-4 w-4" />
+          
+          <Button variant="outline" size="sm" onClick={handleRemoveAll}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            Remove All
           </Button>
         </div>
 
-        {currentPdf.status === 'uploading' && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Uploading...</span>
-              <span>{currentPdf.uploadProgress}%</span>
+        {/* Merged PDF Display */}
+        {mergedPdf && (
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Merge className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div>
+                  <h3 className="font-semibold text-green-900 dark:text-green-100">{mergedPdf.name}</h3>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    {mergedPdf.files.length} files merged • {mergedPdf.pageCount} total pages
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {mergedPdf.status === 'ready' && (
+                  <Button size="sm" onClick={() => setCurrentPdf(mergedPdf)}>
+                    Edit Merged PDF
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={() => set({ mergedPdf: null })}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <Progress value={currentPdf.uploadProgress} />
+            
+            {mergedPdf.status === 'merging' && (
+              <div className="mt-3">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Merging files...</span>
+                </div>
+                <Progress value={50} />
+              </div>
+            )}
           </div>
         )}
 
-        {currentPdf.status === 'error' && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300">
-            <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">{currentPdf.error}</span>
+        {/* File List */}
+        <div className="space-y-2 max-h-96 overflow-auto">
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="pdf-files">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef}>
+                  {uploadedFiles.map((file, index) => (
+                    <FileItem
+                      key={file.id}
+                      file={file}
+                      index={index}
+                      isSelected={selectedFiles.includes(file.id)}
+                      onToggleSelect={() => toggleFileSelection(file.id)}
+                      onRemove={() => removePdf(file.id)}
+                      onEdit={() => setCurrentPdf(file)}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+
+        {/* Upload More Button */}
+        <div
+          {...getRootProps()}
+          className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-4 text-center hover:border-slate-400 dark:hover:border-slate-600 cursor-pointer transition-colors"
+        >
+          <input {...getInputProps()} />
+          <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+            <Upload className="h-4 w-4" />
+            <span className="text-sm">Add more PDFs ({uploadedFiles.length}/{MAX_FILES})</span>
           </div>
-        )}
+        </div>
       </div>
     )
   }
@@ -144,27 +284,117 @@ export default function PDFUploader() {
         
         <div>
           <h3 className="text-lg font-semibold mb-2">
-            {isDragActive && !isDragReject && 'Drop your PDF here'}
+            {isDragActive && !isDragReject && 'Drop your PDFs here'}
             {isDragReject && 'Invalid file type'}
-            {!isDragActive && !isDragReject && 'Upload PDF Document'}
+            {!isDragActive && !isDragReject && 'Upload PDF Documents'}
           </h3>
           
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
             {isDragReject 
-              ? 'Please upload a valid PDF file'
-              : 'Drag and drop your PDF file here, or click to browse'
+              ? 'Please upload valid PDF files only'
+              : `Drag and drop your PDF files here, or click to browse (max ${MAX_FILES} files)`
             }
           </p>
           
           <Button variant="outline" size="sm">
-            Choose File
+            Choose Files
           </Button>
         </div>
         
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          Maximum file size: 10MB • PDF format only
+          Maximum file size: 10MB per file • PDF format only • Multiple files supported
         </div>
       </div>
     </div>
+  )
+}
+
+// Individual file item component
+function FileItem({ 
+  file, 
+  index, 
+  isSelected, 
+  onToggleSelect, 
+  onRemove, 
+  onEdit 
+}: {
+  file: PDFFile
+  index: number
+  isSelected: boolean
+  onToggleSelect: () => void
+  onRemove: () => void
+  onEdit: () => void
+}) {
+  return (
+    <Draggable key={file.id} draggableId={file.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={cn(
+            'flex items-center gap-3 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg transition-all',
+            isSelected && 'ring-2 ring-primary-500 border-primary-500',
+            snapshot.isDragging && 'shadow-lg scale-105'
+          )}
+        >
+          {/* Drag Handle */}
+          <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+            <div className="w-2 h-6 flex flex-col justify-center gap-1">
+              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+              <div className="w-full h-0.5 bg-slate-400 rounded"></div>
+            </div>
+          </div>
+
+          {/* Selection Checkbox */}
+          <button onClick={onToggleSelect} className="flex-shrink-0">
+            {isSelected ? (
+              <CheckSquare className="h-5 w-5 text-primary-600" />
+            ) : (
+              <Square className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+            )}
+          </button>
+
+          {/* File Icon */}
+          <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+
+          {/* File Info */}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium truncate" title={file.name}>{file.name}</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {(file.size / 1024 / 1024).toFixed(1)} MB
+              {file.pageCount > 0 && ` • ${file.pageCount} pages`}
+            </p>
+            
+            {/* Upload Progress */}
+            {file.status === 'uploading' && (
+              <div className="mt-2">
+                <Progress value={file.uploadProgress} className="h-1" />
+              </div>
+            )}
+            
+            {/* Error Display */}
+            {file.status === 'error' && (
+              <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-400">
+                <AlertCircle className="h-3 w-3" />
+                <span className="text-xs">{file.error}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1">
+            {file.status === 'ready' && (
+              <Button variant="ghost" size="sm" onClick={onEdit}>
+                Edit
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onRemove}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </Draggable>
   )
 }

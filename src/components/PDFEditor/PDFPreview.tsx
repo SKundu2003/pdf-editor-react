@@ -24,14 +24,31 @@ export default function PDFPreview() {
   const resetZoom = () => setScale(1.0)
   const rotate = () => setRotation(r => (r + 90) % 360)
 
-  if (!currentPdf || currentPdf.status !== 'ready') {
+  // Get the file to display
+  const getFileToDisplay = () => {
+    if (!currentPdf) return null
+    
+    if ('file' in currentPdf) {
+      // Single PDF file
+      return currentPdf.status === 'ready' ? currentPdf.file : null
+    } else if ('bytes' in currentPdf && currentPdf.bytes) {
+      // Merged PDF
+      return new File([currentPdf.bytes], currentPdf.name, { type: 'application/pdf' })
+    }
+    
+    return null
+  }
+
+  const fileToDisplay = getFileToDisplay()
+
+  if (!fileToDisplay) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 mx-auto bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
             <FileText className="h-8 w-8 text-slate-400" />
           </div>
-          <p className="text-slate-600 dark:text-slate-400">No PDF loaded</p>
+          <p className="text-slate-600 dark:text-slate-400">Select a PDF to preview</p>
         </div>
       </div>
     )
@@ -74,7 +91,7 @@ export default function PDFPreview() {
         <div className="flex justify-center">
           <div className="shadow-lg">
             <Document
-              file={currentPdf.file}
+              file={fileToDisplay}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={(error) => console.error('PDF load error:', error)}
               loading={

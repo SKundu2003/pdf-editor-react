@@ -7,6 +7,18 @@ export interface PDFFile {
   uploadProgress: number
   status: 'uploading' | 'processing' | 'ready' | 'error'
   error?: string
+  order: number
+  selected: boolean
+}
+
+export interface MergedPDF {
+  id: string
+  name: string
+  files: PDFFile[]
+  pageCount: number
+  bytes?: Uint8Array
+  status: 'pending' | 'merging' | 'ready' | 'error'
+  error?: string
 }
 
 export interface ConvertedContent {
@@ -17,13 +29,17 @@ export interface ConvertedContent {
 }
 
 export interface EditorState {
-  currentPdf: PDFFile | null
+  uploadedFiles: PDFFile[]
+  mergedPdf: MergedPDF | null
+  currentPdf: PDFFile | MergedPDF | null
   convertedContent: ConvertedContent | null
   isEditing: boolean
   hasUnsavedChanges: boolean
   editedContent: string
   apiStatus: 'idle' | 'converting' | 'generating' | 'error'
   apiError: string | null
+  selectedFiles: string[]
+  draggedFile: string | null
 }
 
 export interface APIProgress {
