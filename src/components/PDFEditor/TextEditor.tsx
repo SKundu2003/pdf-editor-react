@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { Editor } from '@tinymce/tinymce-react'
 import { Save, Undo, Redo, Type, Palette, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useEditorStore } from '../../store/editorStore'
@@ -15,19 +14,23 @@ export default function TextEditor() {
     markAsSaved 
   } = useEditorStore()
   const { addToast } = useToast()
-  const editorRef = useRef<any>(null)
-  const [isEditorReady, setIsEditorReady] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [content, setContent] = useState('')
 
-  const handleEditorChange = (content: string) => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const content = e.target.value
+    setContent(content)
     updateEditedContent(content)
   }
 
   // Update editor content when converted content changes
   useEffect(() => {
-    if (convertedContent && editorRef.current && isEditorReady) {
-      editorRef.current.setContent(convertedContent.html)
+    if (convertedContent) {
+      setContent(convertedContent.html)
+      updateEditedContent(convertedContent.html)
     }
-  }, [convertedContent, isEditorReady])
+  }, [convertedContent, updateEditedContent])
+
   const handleSave = () => {
     markAsSaved()
     addToast({
@@ -38,15 +41,7 @@ export default function TextEditor() {
   }
 
   const handleUndo = () => {
-    if (editorRef.current) {
-      editorRef.current.execCommand('Undo')
-    }
-  }
-
-  const handleRedo = () => {
-    if (editorRef.current) {
-      editorRef.current.execCommand('Redo')
-    }
+    // Basic undo functionality can be added here
   }
 
   // Keyboard shortcuts
@@ -63,10 +58,6 @@ export default function TextEditor() {
               e.preventDefault()
               handleUndo()
             }
-            break
-          case 'y':
-            e.preventDefault()
-            handleRedo()
             break
         }
       }
@@ -94,23 +85,20 @@ export default function TextEditor() {
       {/* Editor Toolbar */}
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleUndo} disabled={!isEditorReady}>
+          <Button variant="ghost" size="sm" onClick={handleUndo}>
             <Undo className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleRedo} disabled={!isEditorReady}>
-            <Redo className="h-4 w-4" />
           </Button>
           
           <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
           
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <Bold className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <Italic className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <Underline className="h-4 w-4" />
             </Button>
           </div>
@@ -118,13 +106,13 @@ export default function TextEditor() {
           <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
 
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <AlignLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <AlignCenter className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" disabled={!isEditorReady}>
+            <Button variant="ghost" size="sm">
               <AlignRight className="h-4 w-4" />
             </Button>
           </div>
@@ -141,94 +129,36 @@ export default function TextEditor() {
         </div>
       </div>
 
-      {/* TinyMCE Editor */}
+      {/* HTML Content Editor */}
       <div className="flex-1 p-4">
-        <Editor
-          onInit={(evt, editor) => {
-            editorRef.current = editor
-            setIsEditorReady(true)
-            // Set initial content if available
-            if (convertedContent) {
-              editor.setContent(convertedContent.html)
-            }
-          }}
-          initialValue={convertedContent?.html || editedContent}
-          onEditorChange={handleEditorChange}
-          init={{
-            height: '100%',
-            menubar: false,
-            plugins: [
-              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-              'textcolor', 'colorpicker', 'paste'
-            ],
-            toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',
-            menubar: false,
-            content_style: `
-              body { 
-                font-family: Arial, sans-serif; 
-                font-size: 14px; 
-                line-height: 1.6;
-                color: #374151;
-                background: #ffffff;
-                margin: 0;
-                padding: 20px;
-                max-width: none;
-              }
-              h1, h2, h3, h4, h5, h6 { 
-                margin-top: 1em; 
-                margin-bottom: 0.5em; 
-                font-weight: 600;
-              }
-              p { 
-                margin-bottom: 1em; 
-              }
-              ul, ol { 
-                margin-bottom: 1em; 
-                padding-left: 1.5em; 
-              }
-              blockquote {
-                border-left: 4px solid #e5e7eb;
-                padding-left: 1em;
-                margin: 1em 0;
-                font-style: italic;
-                color: #6b7280;
-              }
-              img {
-                max-width: 100%;
-                height: auto;
-              }
-              table {
-                border-collapse: collapse;
-                width: 100%;
-              }
-              table td, table th {
-                border: 1px solid #ddd;
-                padding: 8px;
-              }
-            `,
-            skin: 'oxide',
-            content_css: 'default',
-            branding: false,
-            resize: false,
-            statusbar: false,
-            elementpath: false,
-            paste_data_images: true,
-            automatic_uploads: false,
-            setup: (editor) => {
-              editor.on('init', () => {
-                setIsEditorReady(true)
-                // Set content after editor is fully initialized
-                if (convertedContent) {
-                  setTimeout(() => {
-                    editor.setContent(convertedContent.html)
-                  }, 100)
-                }
-              })
-            }
-          }}
-        />
+        <div className="h-full flex gap-4">
+          {/* HTML Source Editor */}
+          <div className="flex-1 flex flex-col">
+            <h4 className="text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">HTML Source</h4>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={handleContentChange}
+              className="flex-1 w-full p-3 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="HTML content will appear here after conversion..."
+            />
+          </div>
+          
+          {/* HTML Preview */}
+          <div className="flex-1 flex flex-col">
+            <h4 className="text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Preview</h4>
+            <div 
+              className="flex-1 p-4 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 overflow-auto"
+              dangerouslySetInnerHTML={{ __html: content }}
+              style={{
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                color: '#374151'
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
