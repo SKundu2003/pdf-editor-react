@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Save, Type, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Palette, FileText } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useEditorStore } from '../../store/editorStore'
@@ -16,22 +16,93 @@ export default function TextEditor() {
   const { addToast } = useToast()
   const editorRef = useRef<HTMLDivElement>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [lastCursorPosition, setLastCursorPosition] = useState<number>(0)
+
+  // Save cursor position
+  const saveCursorPosition = useCallback(() => {
+    if (!editorRef.current) return
+    
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
+    
+    const range = selection.getRangeAt(0)
+    const preCaretRange = range.cloneRange()
+    preCaretRange.selectNodeContents(editorRef.current)
+    preCaretRange.setEnd(range.endContainer, range.endOffset)
+    setLastCursorPosition(preCaretRange.toString().length)
+  }, [])
+
+  // Restore cursor position
+  const restoreCursorPosition = useCallback((position: number) => {
+    if (!editorRef.current) return
+    
+    const walker = document.createTreeWalker(
+      editorRef.current,
+      NodeFilter.SHOW_TEXT,
+      null
+    )
+    
+    let currentPos = 0
+    let node: Node | null
+    
+    while (node = walker.nextNode()) {
+      const nodeLength = node.textContent?.length || 0
+      if (currentPos + nodeLength >= position) {
+        const range = document.createRange()
+        const selection = window.getSelection()
+        
+        range.setStart(node, Math.max(0, position - currentPos))
+        range.collapse(true)
+        
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+        break
+      }
+      currentPos += nodeLength
+    }
+  }, [])
+
+  // Clean HTML content
+  const cleanHtmlContent = useCallback((html: string): string => {
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = html
+    
+    // Remove script tags and other dangerous elements
+    const scripts = tempDiv.querySelectorAll('script, style, meta, link')
+    scripts.forEach(el => el.remove())
+    
+    // Clean up attributes
+    const allElements = tempDiv.querySelectorAll('*')
+    allElements.forEach(el => {
+      // Keep only safe attributes
+      const safeAttributes = ['class', 'id', 'href', 'src', 'alt', 'title']
+      const attributes = Array.from(el.attributes)
+      attributes.forEach(attr => {
+        if (!safeAttributes.includes(attr.name.toLowerCase())) {
+          el.removeAttribute(attr.name)
+        }
+      })
+    })
+    
+    return tempDiv.innerHTML
+  }, [])
 
   // Initialize editor content when converted content is available
   useEffect(() => {
     if (convertedContent && convertedContent.html && editorRef.current && !isInitialized) {
       try {
-        // Clean and sanitize the HTML content
-        const cleanHtml = convertedContent.html
-          .replace(/\n/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-        
+        const cleanHtml = cleanHtmlContent(convertedContent.html)
         editorRef.current.innerHTML = cleanHtml
         updateEditedContent(cleanHtml)
         setIsInitialized(true)
         
-        console.log('Editor initialized with HTML content')
+        // Focus the editor after a short delay
+        setTimeout(() => {
+          editorRef.current?.focus()
+        }, 100)
+        
+        console.log('Editor initialized with cleaned HTML content')
       } catch (error) {
         console.error('Error initializing editor:', error)
         addToast({
@@ -41,27 +112,62 @@ export default function TextEditor() {
         })
       }
     }
-  }, [convertedContent, isInitialized, updateEditedContent, addToast])
+  }, [convertedContent, isInitialized, updateEditedContent, addToast, cleanHtmlContent])
 
   // Reset initialization when content changes
   useEffect(() => {
     if (!convertedContent) {
       setIsInitialized(false)
+      if (editorRef.current) {
+        editorRef.current.innerHTML = ''
+      }
     }
   }, [convertedContent])
 
-  const handleContentChange = () => {
-    if (editorRef.current && isInitialized) {
-      try {
-        const content = editorRef.current.innerHTML
-        updateEditedContent(content)
-      } catch (error) {
-        console.error('Error updating content:', error)
-      }
+  // Handle content changes with proper cursor management
+  const handleContentChange = useCallback(() => {
+    if (!editorRef.current || !isInitialized) return
+    
+    try {
+      saveCursorPosition()
+      const content = editorRef.current.innerHTML
+      updateEditedContent(content)
+    } catch (error) {
+      console.error('Error updating content:', error)
     }
-  }
+  }, [isInitialized, saveCursorPosition, updateEditedContent])
 
-  const handleSave = () => {
+  // Handle input events
+  const handleInput = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    handleContentChange()
+  }, [handleContentChange])
+
+  // Handle paste events
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault()
+    
+    const text = e.clipboardData.getData('text/plain')
+    const selection = window.getSelection()
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0)
+      range.deleteContents()
+      
+      const textNode = document.createTextNode(text)
+      range.insertNode(textNode)
+      
+      // Move cursor to end of inserted text
+      range.setStartAfter(textNode)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      
+      handleContentChange()
+    }
+  }, [handleContentChange])
+
+  const handleSave = useCallback(() => {
     try {
       markAsSaved()
       addToast({
@@ -76,50 +182,75 @@ export default function TextEditor() {
         variant: 'destructive'
       })
     }
-  }
+  }, [markAsSaved, addToast])
 
-  const execCommand = (command: string, value?: string) => {
+  const execCommand = useCallback((command: string, value?: string) => {
     try {
+      saveCursorPosition()
       document.execCommand(command, false, value)
-      handleContentChange()
-      editorRef.current?.focus()
+      
+      // Small delay to let the command execute
+      setTimeout(() => {
+        handleContentChange()
+        editorRef.current?.focus()
+      }, 10)
     } catch (error) {
       console.error('Error executing command:', error)
     }
-  }
+  }, [saveCursorPosition, handleContentChange])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Handle keyboard shortcuts
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case 's':
           e.preventDefault()
           handleSave()
-          break
+          return
         case 'b':
           e.preventDefault()
           execCommand('bold')
-          break
+          return
         case 'i':
           e.preventDefault()
           execCommand('italic')
-          break
+          return
         case 'u':
           e.preventDefault()
           execCommand('underline')
-          break
+          return
         case 'z':
           if (!e.shiftKey) {
             e.preventDefault()
             execCommand('undo')
+            return
           }
           break
         case 'y':
           e.preventDefault()
           execCommand('redo')
-          break
+          return
       }
     }
-  }
+    
+    // Handle special keys that might cause cursor issues
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      saveCursorPosition()
+    }
+  }, [handleSave, execCommand, saveCursorPosition])
+
+  // Handle selection changes
+  const handleSelectionChange = useCallback(() => {
+    if (document.activeElement === editorRef.current) {
+      saveCursorPosition()
+    }
+  }, [saveCursorPosition])
+
+  // Add selection change listener
+  useEffect(() => {
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => document.removeEventListener('selectionchange', handleSelectionChange)
+  }, [handleSelectionChange])
 
   if (!convertedContent) {
     return (
@@ -287,8 +418,9 @@ export default function TextEditor() {
         <div
           ref={editorRef}
           contentEditable={isInitialized}
-          onInput={handleContentChange}
+          onInput={handleInput}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className={cn(
             "min-h-full w-full p-6 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent",
             "prose prose-slate dark:prose-invert max-w-none",
