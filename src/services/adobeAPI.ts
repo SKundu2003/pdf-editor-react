@@ -34,13 +34,16 @@ class CustomPDFServices {
       })
 
       if (!response.ok) {
-        throw new Error(`Conversion failed: ${response.statusText}`)
+        const errorText = await response.text()
+        console.error('API Error Response:', errorText)
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`)
       }
 
       onProgress?.({ stage: 'converting', progress: 50, message: 'Processing document...' })
       
       // Get HTML content from response
       const htmlContent = await response.text()
+      console.log('API Response HTML:', htmlContent.substring(0, 200) + '...')
 
       onProgress?.({ stage: 'converting', progress: 100, message: 'Conversion complete!' })
 
@@ -48,51 +51,17 @@ class CustomPDFServices {
         html: htmlContent,
         originalStructure: {
           pages: 1,
-          fonts: ['Arial', 'Times New Roman', 'Helvetica'],
-          colors: ['#000000', '#333333', '#666666'],
+          fonts: ['Arial', 'Times New Roman', 'Helvetica', 'Georgia'],
+          colors: ['#000000', '#333333', '#666666', '#2563eb'],
           layout: 'single-column'
         },
-        fonts: ['Arial', 'Times New Roman', 'Helvetica'],
-        styles: ['body { font-family: Arial, sans-serif; line-height: 1.6; }']
+        fonts: ['Arial', 'Times New Roman', 'Helvetica', 'Georgia'],
+        styles: ['body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }']
       }
     } catch (error) {
       console.error('PDF to HTML conversion failed:', error)
-      
-      // Fallback to mock content for demo purposes
-      const mockHtml = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2563eb; font-size: 28px; margin-bottom: 20px;">Sample Document</h1>
-          <p style="font-size: 16px; color: #374151; margin-bottom: 16px;">
-            This is a sample PDF document that has been converted to HTML for editing.
-            You can now edit this text using the rich text editor below.
-          </p>
-          <h2 style="color: #1f2937; font-size: 22px; margin: 24px 0 16px 0;">Key Features</h2>
-          <ul style="margin-bottom: 20px; padding-left: 20px;">
-            <li style="margin-bottom: 8px;">Rich text formatting preservation</li>
-            <li style="margin-bottom: 8px;">Font and color retention</li>
-            <li style="margin-bottom: 8px;">Layout structure maintenance</li>
-          </ul>
-          <p style="font-size: 16px; color: #374151; margin-bottom: 16px;">
-            <strong>Bold text</strong>, <em>italic text</em>, and <u>underlined text</u> 
-            are all preserved during the conversion process.
-          </p>
-          <blockquote style="border-left: 4px solid #e5e7eb; padding-left: 16px; margin: 20px 0; font-style: italic; color: #6b7280;">
-            "This application provides a seamless PDF editing experience directly in your browser."
-          </blockquote>
-        </div>
-      `
 
-      return {
-        html: mockHtml,
-        originalStructure: {
-          pages: 1,
-          fonts: ['Arial', 'Times New Roman'],
-          colors: ['#2563eb', '#374151', '#1f2937'],
-          layout: 'single-column'
-        },
-        fonts: ['Arial', 'Times New Roman', 'Helvetica'],
-        styles: ['body { font-family: Arial, sans-serif; }']
-      }
+      throw error // Re-throw the error instead of using fallback
     }
   }
 

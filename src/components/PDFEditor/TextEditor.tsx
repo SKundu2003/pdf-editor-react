@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { Save, Undo, Redo, Type, Palette, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline } from 'lucide-react'
+import { Save, Undo, Redo, Type, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useEditorStore } from '../../store/editorStore'
 import { useToast } from '../UI/Toast'
@@ -14,22 +14,24 @@ export default function TextEditor() {
     markAsSaved 
   } = useEditorStore()
   const { addToast } = useToast()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [content, setContent] = useState('')
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const content = e.target.value
-    setContent(content)
-    updateEditedContent(content)
-  }
+  const editorRef = useRef<HTMLDivElement>(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   // Update editor content when converted content changes
   useEffect(() => {
-    if (convertedContent) {
-      setContent(convertedContent.html)
+    if (convertedContent && editorRef.current) {
+      editorRef.current.innerHTML = convertedContent.html
       updateEditedContent(convertedContent.html)
+      setIsEditing(true)
     }
   }, [convertedContent, updateEditedContent])
+
+  const handleContentChange = () => {
+    if (editorRef.current) {
+      const content = editorRef.current.innerHTML
+      updateEditedContent(content)
+    }
+  }
 
   const handleSave = () => {
     markAsSaved()
@@ -40,32 +42,34 @@ export default function TextEditor() {
     })
   }
 
-  const handleUndo = () => {
-    // Basic undo functionality can be added here
+  const execCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    handleContentChange()
+    editorRef.current?.focus()
   }
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 's':
-            e.preventDefault()
-            handleSave()
-            break
-          case 'z':
-            if (!e.shiftKey) {
-              e.preventDefault()
-              handleUndo()
-            }
-            break
-        }
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
+        case 's':
+          e.preventDefault()
+          handleSave()
+          break
+        case 'b':
+          e.preventDefault()
+          execCommand('bold')
+          break
+        case 'i':
+          e.preventDefault()
+          execCommand('italic')
+          break
+        case 'u':
+          e.preventDefault()
+          execCommand('underline')
+          break
       }
     }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }
 
   if (!convertedContent) {
     return (
@@ -83,22 +87,31 @@ export default function TextEditor() {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
       {/* Editor Toolbar */}
-      <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleUndo}>
-            <Undo className="h-4 w-4" />
-          </Button>
-          
-          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
-          
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('bold')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <Bold className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('italic')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <Italic className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('underline')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <Underline className="h-4 w-4" />
             </Button>
           </div>
@@ -106,21 +119,87 @@ export default function TextEditor() {
           <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
 
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('justifyLeft')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <AlignLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('justifyCenter')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <AlignCenter className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('justifyRight')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
               <AlignRight className="h-4 w-4" />
             </Button>
           </div>
+
+          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('insertUnorderedList')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('insertOrderedList')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
+              <ListOrdered className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => execCommand('formatBlock', 'blockquote')}
+              className="hover:bg-slate-200 dark:hover:bg-slate-700"
+            >
+              <Quote className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+
+          <select 
+            onChange={(e) => execCommand('fontSize', e.target.value)}
+            className="text-sm border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800"
+          >
+            <option value="1">Small</option>
+            <option value="3" selected>Normal</option>
+            <option value="5">Large</option>
+            <option value="7">Extra Large</option>
+          </select>
+
+          <input
+            type="color"
+            onChange={(e) => execCommand('foreColor', e.target.value)}
+            className="w-8 h-8 border border-slate-300 dark:border-slate-600 rounded cursor-pointer"
+            title="Text Color"
+          />
         </div>
 
         <div className="flex items-center gap-2">
           {hasUnsavedChanges && (
-            <span className="text-xs text-amber-600 dark:text-amber-400">Unsaved changes</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+              Unsaved changes
+            </span>
           )}
           <Button size="sm" onClick={handleSave} disabled={!hasUnsavedChanges}>
             <Save className="h-4 w-4 mr-1" />
@@ -129,36 +208,34 @@ export default function TextEditor() {
         </div>
       </div>
 
-      {/* HTML Content Editor */}
-      <div className="flex-1 p-4">
-        <div className="h-full flex gap-4">
-          {/* HTML Source Editor */}
-          <div className="flex-1 flex flex-col">
-            <h4 className="text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">HTML Source</h4>
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleContentChange}
-              className="flex-1 w-full p-3 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="HTML content will appear here after conversion..."
-            />
-          </div>
-          
-          {/* HTML Preview */}
-          <div className="flex-1 flex flex-col">
-            <h4 className="text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">Preview</h4>
-            <div 
-              className="flex-1 p-4 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 overflow-auto"
-              dangerouslySetInnerHTML={{ __html: content }}
-              style={{
-                fontFamily: 'Arial, sans-serif',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                color: '#374151'
-              }}
-            />
-          </div>
-        </div>
+      {/* Rich Text Editor */}
+      <div className="flex-1 p-4 overflow-auto">
+        <div
+          ref={editorRef}
+          contentEditable={isEditing}
+          onInput={handleContentChange}
+          onKeyDown={handleKeyDown}
+          className={cn(
+            "min-h-full w-full p-4 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500",
+            "prose prose-slate dark:prose-invert max-w-none",
+            "[&>*]:mb-4 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg",
+            "[&>p]:leading-relaxed [&>ul]:list-disc [&>ol]:list-decimal",
+            "[&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic"
+          )}
+          style={{
+            minHeight: '500px',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            color: '#374151'
+          }}
+        />
+      </div>
+
+      {/* Help Text */}
+      <div className="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          💡 Use Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline, Ctrl+S to save
+        </p>
       </div>
     </div>
   )
