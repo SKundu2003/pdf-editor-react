@@ -269,7 +269,8 @@ export const useEditorStore = create<EditorStore>()(
       set({ 
         convertedContent: content, 
         editedContent: content?.html || '',
-        isEditing: true 
+        isEditing: true,
+        hasUnsavedChanges: false
       })
     },
     

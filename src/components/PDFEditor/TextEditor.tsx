@@ -123,7 +123,7 @@ export default function TextEditor() {
 
   if (!convertedContent) {
     return (
-      <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 min-h-[400px]">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 mx-auto bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
@@ -142,7 +142,7 @@ export default function TextEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[500px]">
       {/* Editor Header */}
       <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export default function TextEditor() {
       </div>
 
       {/* Editor Content */}
-      <div className="flex-1 overflow-auto p-4 min-h-0">
+      <div className="flex-1 overflow-auto p-4 min-h-0" style={{ minHeight: '300px' }}>
         <div
           ref={editorRef}
           contentEditable={isInitialized}
@@ -301,7 +301,7 @@ export default function TextEditor() {
             "focus-within:shadow-sm transition-shadow duration-200"
           )}
           style={{
-            minHeight: '400px',
+            minHeight: '300px',
             fontSize: '16px',
             lineHeight: '1.7',
             color: 'inherit'

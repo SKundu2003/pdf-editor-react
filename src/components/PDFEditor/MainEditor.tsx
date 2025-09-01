@@ -192,25 +192,25 @@ export default function MainEditor() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px,280px,1fr,1fr] gap-4 p-4 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[260px,1fr] lg:grid-cols-[320px,280px,1fr,1fr] gap-4 p-4 overflow-hidden min-h-0">
         {/* Sidebar */}
-        <aside className="space-y-4 overflow-auto">
+        <aside className="space-y-4 overflow-auto min-h-0">
           <PDFUploader />
           <DocumentInfo />
         </aside>
 
         {/* Page Reorder Panel */}
-        <aside className="space-y-4 overflow-auto">
+        <aside className="space-y-4 overflow-auto min-h-0 hidden lg:block">
           <PageReorder />
         </aside>
 
         {/* PDF Preview */}
-        <div className="min-h-0">
+        <div className="min-h-0 hidden md:block">
           <PDFPreview />
         </div>
 
         {/* Text Editor */}
-        <div className="min-h-0">
+        <div className="min-h-0 col-span-1 md:col-span-1 lg:col-span-1">
           <TextEditor />
         </div>
       </div>
