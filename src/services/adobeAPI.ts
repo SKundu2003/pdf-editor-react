@@ -30,7 +30,11 @@ class CustomPDFServices {
       // Call custom API endpoint
       const response = await fetch(`${this.baseUrl}/api/pdf/to-html`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        mode: 'cors',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
       })
 
       if (!response.ok) {
@@ -60,8 +64,13 @@ class CustomPDFServices {
       }
     } catch (error) {
       console.error('PDF to HTML conversion failed:', error)
+      
+      // Provide more specific error messages
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(`Cannot connect to PDF API at ${this.baseUrl}. Please check if the API server is running and accessible.`)
+      }
 
-      throw error // Re-throw the error instead of using fallback
+      throw error
     }
   }
 
