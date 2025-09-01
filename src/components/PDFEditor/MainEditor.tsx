@@ -60,14 +60,21 @@ export default function MainEditor() {
       return
     }
     
-    if (!isApiConfigured) {
-      setShowApiDialog(true)
-      return
-    }
-
     setApiStatus('converting')
     
     try {
+      // Initialize API if not configured
+      if (!isApiConfigured) {
+        try {
+          initializeCustomAPI()
+          setIsApiConfigured(true)
+        } catch (error) {
+          setShowApiDialog(true)
+          setApiStatus('idle')
+          return
+        }
+      }
+      
       const api = getCustomAPI()
       
       let fileToConvert: File
@@ -161,7 +168,7 @@ export default function MainEditor() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            disabled={apiStatus !== 'idle'}
             onClick={() => setShowApiDialog(true)}
             disabled={apiStatus !== 'idle'}
           >

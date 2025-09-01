@@ -81,10 +81,13 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-              Configure your PDF API endpoint:
+              Current API endpoint:
             </p>
             <p className="text-xs text-blue-700 dark:text-blue-300">
-              Set VITE_PDF_API_BASE_URL in your environment variables
+              {import.meta.env.VITE_PDF_API_BASE_URL || 'https://slot-johnson-bend-internship.trycloudflare.com'}
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              To change: Set VITE_PDF_API_BASE_URL in .env file
             </p>
           </div>
 

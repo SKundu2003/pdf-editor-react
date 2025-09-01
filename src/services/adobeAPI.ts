@@ -384,7 +384,7 @@ class CustomPDFServices {
 let customService: CustomPDFServices | null = null
 
 export function initializeCustomAPI(): CustomPDFServices {
-  const baseUrl = import.meta.env.VITE_PDF_API_BASE_URL || 'https://electric-virtual-proteins-olympics.trycloudflare.com'
+  const baseUrl = import.meta.env.VITE_PDF_API_BASE_URL || 'https://slot-johnson-bend-internship.trycloudflare.com'
   
   if (!baseUrl) {
     throw new Error('PDF API base URL not found in environment variables')
