@@ -3,7 +3,7 @@ import { FileText, Download, RefreshCw, Settings, Layers } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useToast } from '../UI/Toast'
 import { useEditorStore } from '../../store/editorStore'
-import { getCustomAPI, initializeCustomAPI, isCustomAPIConfigured } from '../../services/adobeAPI'
+import { getPDFService, initializePDFService, isPDFServiceConfigured } from '../../services/pdfService'
 import { downloadBytesAsFile } from '../../utils/download'
 import PDFUploader from './PDFUploader'
 import PDFPreview from './PDFPreview'
@@ -34,17 +34,17 @@ export default function MainEditor() {
 
   const handleApiKeySubmit = useCallback(() => {
     try {
-      initializeCustomAPI()
+      initializePDFService()
       setIsApiConfigured(true)
       addToast({
         title: 'API Configured',
-        description: 'Custom PDF Services is ready to use',
+        description: 'PDF Service is ready to use',
         variant: 'success'
       })
     } catch (error) {
       addToast({
         title: 'Configuration Error',
-        description: error instanceof Error ? error.message : 'Failed to configure Custom API',
+        description: error instanceof Error ? error.message : 'Failed to configure PDF Service',
         variant: 'destructive'
       })
     }
@@ -63,10 +63,10 @@ export default function MainEditor() {
     setApiStatus('converting')
     
     try {
-      // Initialize API
-      initializeCustomAPI()
+      // Initialize PDF Service
+      initializePDFService()
       
-      const api = getCustomAPI()
+      const service = getPDFService()
       
       let fileToConvert: File
       if ('file' in currentPdf) {
@@ -77,7 +77,7 @@ export default function MainEditor() {
         throw new Error('No valid PDF file found')
       }
       
-      const content = await api.convertPdfToHtml(fileToConvert, (progress) => setApiProgress(progress))
+      const content = await service.convertPdfToHtml(fileToConvert, (progress) => setApiProgress(progress))
       
       setConvertedContent(content)
       setApiStatus('idle')
@@ -106,8 +106,8 @@ export default function MainEditor() {
     setApiStatus('generating')
     
     try {
-      const api = getCustomAPI()
-      const pdfBytes = await api.convertHtmlToPdf(
+      const service = getPDFService()
+      const pdfBytes = await service.convertHtmlToPdf(
         editedContent,
         convertedContent.originalStructure,
         (progress) => setApiProgress(progress)

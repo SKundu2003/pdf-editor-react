@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { PDFFile, MergedPDF, ConvertedContent, EditorState, APIProgress, PageInfo, PageOrder } from '../types/editor'
-import { getCustomAPI } from '../services/adobeAPI'
+import { getPDFService } from '../services/pdfService'
 import { PDFPageService } from '../services/pdfPageService'
 
 interface EditorStore extends EditorState {
@@ -233,8 +233,8 @@ export const useEditorStore = create<EditorStore>()(
           bytes = await PDFPageService.createReorderedPDF(state.pageOrder.pages, pdfDocuments)
         } else {
           // Standard merge
-          const api = getCustomAPI()
-          bytes = await api.mergePdfs(
+          const service = getPDFService()
+          bytes = await service.mergePdfs(
             filesToMerge.map(f => f.file),
             (progress) => {
               // Progress updates handled by components

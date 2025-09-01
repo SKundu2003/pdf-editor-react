@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Key, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '../UI/Button'
-import { isCustomAPIConfigured } from '../../services/adobeAPI'
+import { isPDFServiceConfigured } from '../../services/pdfService'
 import { cn } from '../../utils/cn'
 
 interface APIKeyDialogProps {
@@ -46,12 +46,12 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                {isConfigured ? 'PDF API Configured' : 'PDF API Configuration'}
+                {isConfigured ? 'PDF Service Configured' : 'PDF Service Configuration'}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {isConfigured 
-                  ? 'Custom PDF Services is ready for use'
-                  : 'PDF API endpoint is configured via environment variables'
+                  ? 'PDF Service is ready for use'
+                  : 'PDF service endpoint is configured via environment variables'
                 }
               </p>
             </div>
@@ -61,27 +61,27 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-4 mb-4">
               <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
                 <CheckCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">API Ready</span>
+                <span className="text-sm font-medium">Service Ready</span>
               </div>
               <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                You can now convert PDFs to HTML for editing using your custom API.
+                You can now convert PDFs to HTML for editing using your backend service.
               </p>
             </div>
           ) : (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-4">
               <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
                 <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">API Not Configured</span>
+                <span className="text-sm font-medium">Service Not Configured</span>
               </div>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                PDF API base URL is missing from environment variables.
+                PDF service base URL is missing from environment variables.
               </p>
             </div>
           )}
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-              Current API endpoint:
+              Current service endpoint:
             </p>
             <p className="text-xs text-blue-700 dark:text-blue-300">
               {import.meta.env.VITE_PDF_API_BASE_URL || 'https://slot-johnson-bend-internship.trycloudflare.com'}
