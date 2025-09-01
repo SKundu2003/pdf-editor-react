@@ -268,7 +268,7 @@ export const useEditorStore = create<EditorStore>()(
     setConvertedContent: (content) => {
       set({ 
         convertedContent: content, 
-        editedContent: content.html,
+        editedContent: content?.html || '',
         isEditing: true 
       })
     },
