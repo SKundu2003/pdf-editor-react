@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Key, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '../UI/Button'
-import { isAdobeAPIConfigured } from '../../services/adobeAPI'
+import { isCustomAPIConfigured } from '../../services/adobeAPI'
 import { cn } from '../../utils/cn'
 
 interface APIKeyDialogProps {
@@ -14,7 +14,7 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
   const [isConfigured, setIsConfigured] = useState(false)
 
   useEffect(() => {
-    setIsConfigured(isAdobeAPIConfigured())
+    setIsConfigured(isCustomAPIConfigured())
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -46,12 +46,12 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
             </div>
             <div>
               <h2 className="text-lg font-semibold">
-                {isConfigured ? 'Adobe API Configured' : 'Adobe API Configuration'}
+                {isConfigured ? 'PDF API Configured' : 'PDF API Configuration'}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {isConfigured 
-                  ? 'Adobe PDF Services is ready for use'
-                  : 'Adobe PDF Services credentials are configured via environment variables'
+                  ? 'Custom PDF Services is ready for use'
+                  : 'PDF API endpoint is configured via environment variables'
                 }
               </p>
             </div>
@@ -64,7 +64,7 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
                 <span className="text-sm font-medium">API Ready</span>
               </div>
               <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                You can now convert PDFs to HTML for editing and export back to PDF.
+                You can now convert PDFs to HTML for editing using your custom API.
               </p>
             </div>
           ) : (
@@ -74,24 +74,18 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
                 <span className="text-sm font-medium">API Not Configured</span>
               </div>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                Adobe API credentials are missing from environment variables.
+                PDF API base URL is missing from environment variables.
               </p>
             </div>
           )}
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-              Need Adobe PDF Services API access?
+              Configure your PDF API endpoint:
             </p>
-            <a
-              href="https://developer.adobe.com/document-services/apis/pdf-services/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Get your free Adobe PDF Services API key
-              <ExternalLink className="h-3 w-3" />
-            </a>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Set VITE_PDF_API_BASE_URL in your environment variables
+            </p>
           </div>
 
           <form onSubmit={handleSubmit}>

@@ -1,27 +1,16 @@
 /**
- * Adobe PDF Services API integration for PDF ↔ HTML conversion
- * Handles authentication, file upload, conversion, and download
+ * Custom PDF Services API integration for PDF ↔ HTML conversion
+ * Handles file upload, conversion, and download using custom API endpoint
  */
 
 import type { PDFFile, ConvertedContent, APIProgress } from '../types/editor'
 
-// Adobe PDF Services API integration
-class AdobePDFServices {
-  private clientId: string
-  private accessToken: string
-  private baseUrl = 'https://pdf-services.adobe.io'
+// Custom PDF Services API integration
+class CustomPDFServices {
+  private baseUrl: string
 
-  constructor(clientId: string, accessToken: string) {
-    this.clientId = clientId
-    this.accessToken = accessToken
-  }
-
-  private getHeaders() {
-    return {
-      'Authorization': `Bearer ${this.accessToken}`,
-      'x-api-key': this.clientId,
-      'Content-Type': 'application/json'
-    }
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl.replace(/\/$/, '') // Remove trailing slash
   }
 
   /**
@@ -34,83 +23,37 @@ class AdobePDFServices {
     try {
       onProgress?.({ stage: 'uploading', progress: 0, message: 'Uploading PDF...' })
       
-      // Step 1: Upload asset
-      const uploadResponse = await fetch(`${this.baseUrl}/assets`, {
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('file', pdfFile)
+      
+      // Call custom API endpoint
+      const response = await fetch(`${this.baseUrl}/api/pdf/to-html`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'x-api-key': this.clientId,
-          'Content-Type': 'application/pdf'
-        },
-        body: pdfFile
+        body: formData
       })
 
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`)
+      if (!response.ok) {
+        throw new Error(`Conversion failed: ${response.statusText}`)
       }
 
-      const { assetID } = await uploadResponse.json()
-      onProgress?.({ stage: 'uploading', progress: 100, message: 'Upload complete' })
-
-      onProgress?.({ stage: 'converting', progress: 0, message: 'Converting to HTML...' })
+      onProgress?.({ stage: 'converting', progress: 50, message: 'Processing document...' })
       
-      // Step 2: Create conversion job
-      const jobResponse = await fetch(`${this.baseUrl}/operation/htmlfromPDF`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          assetID,
-          includeCharBounds: true,
-          includeStyling: true
-        })
-      })
-
-      if (!jobResponse.ok) {
-        throw new Error(`Conversion job failed: ${jobResponse.statusText}`)
-      }
-
-      const { location } = await jobResponse.json()
-      
-      // Step 3: Poll for completion
-      let result
-      let attempts = 0
-      const maxAttempts = 30
-      
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        const statusResponse = await fetch(location, {
-          headers: this.getHeaders()
-        })
-        
-        result = await statusResponse.json()
-        
-        if (result.status === 'done') {
-          break
-        } else if (result.status === 'failed') {
-          throw new Error('Conversion failed')
-        }
-        
-        attempts++
-        const progress = Math.min((attempts / maxAttempts) * 100, 90)
-        onProgress?.({ stage: 'converting', progress, message: 'Processing document...' })
-      }
-
-      if (!result || result.status !== 'done') {
-        throw new Error('Conversion timeout')
-      }
-
-      // Step 4: Download result
-      const downloadResponse = await fetch(result.asset.downloadUri)
-      const htmlContent = await downloadResponse.text()
+      // Get HTML content from response
+      const htmlContent = await response.text()
 
       onProgress?.({ stage: 'converting', progress: 100, message: 'Conversion complete!' })
 
       return {
         html: htmlContent,
-        originalStructure: result.metadata || {},
-        fonts: result.fonts || ['Arial', 'Times New Roman'],
-        styles: result.styles || []
+        originalStructure: {
+          pages: 1,
+          fonts: ['Arial', 'Times New Roman'],
+          colors: ['#000000', '#333333'],
+          layout: 'single-column'
+        },
+        fonts: ['Arial', 'Times New Roman'],
+        styles: []
       }
     } catch (error) {
       console.error('PDF to HTML conversion failed:', error)
@@ -164,77 +107,97 @@ class AdobePDFServices {
     try {
       onProgress?.({ stage: 'processing', progress: 0, message: 'Preparing content...' })
       
-      // Step 1: Upload HTML content
-      const htmlBlob = new Blob([html], { type: 'text/html' })
-      const uploadResponse = await fetch(`${this.baseUrl}/assets`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'x-api-key': this.clientId,
-          'Content-Type': 'text/html'
-        },
-        body: htmlBlob
-      })
+      // For now, use fallback PDF generation since we only have PDF to HTML endpoint
+      // In the future, you can add an HTML to PDF endpoint to your API
+      onProgress?.({ stage: 'processing', progress: 50, message: 'Using fallback generator...' })
 
-      if (!uploadResponse.ok) {
-        throw new Error(`HTML upload failed: ${uploadResponse.statusText}`)
-      }
-
-      const { assetID } = await uploadResponse.json()
-      onProgress?.({ stage: 'processing', progress: 30, message: 'Creating PDF...' })
-
-      // Step 2: Create PDF generation job
-      const jobResponse = await fetch(`${this.baseUrl}/operation/htmltopdf`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          assetID,
-          pageLayout: {
-            pageSize: 'A4'
-          }
-        })
-      })
-
-      if (!jobResponse.ok) {
-        throw new Error(`PDF generation job failed: ${jobResponse.statusText}`)
-      }
-
-      const { location } = await jobResponse.json()
-      onProgress?.({ stage: 'processing', progress: 60, message: 'Generating PDF...' })
-
-      // Step 3: Poll for completion
-      let result
-      let attempts = 0
-      const maxAttempts = 30
+      const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib')
       
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        const statusResponse = await fetch(location, {
-          headers: this.getHeaders()
+      const pdfDoc = await PDFDocument.create()
+      const page = pdfDoc.addPage([612, 792]) // Letter size
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      
+      // Extract text from HTML (simplified)
+      const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      const lines = this.wrapText(textContent, 500, font, 12)
+      
+      let yPosition = 750
+      for (const line of lines) {
+        if (yPosition < 50) break // Prevent overflow
+        page.drawText(line, {
+          x: 50,
+          y: yPosition,
+          size: 12,
+          font,
+          color: rgb(0, 0, 0)
         })
-        
-        result = await statusResponse.json()
-        
-        if (result.status === 'done') {
-          break
-        } else if (result.status === 'failed') {
-          throw new Error('PDF generation failed')
-        }
-        
-        attempts++
-        const progress = 60 + Math.min((attempts / maxAttempts) * 30, 30)
-        onProgress?.({ stage: 'processing', progress, message: 'Generating PDF...' })
+        yPosition -= 20
       }
 
-      if (!result || result.status !== 'done') {
-        throw new Error('PDF generation timeout')
-      }
-
-      // Step 4: Download result
       onProgress?.({ stage: 'downloading', progress: 100, message: 'Download ready!' })
-      const downloadResponse = await fetch(result.asset.downloadUri)
-      const pdfArrayBuffer = await downloadResponse.arrayBuffer()
+      return await pdfDoc.save()
+    } catch (error) {
+      console.error('HTML to PDF conversion failed:', error)
+      
+      // Fallback to pdf-lib generation
+      onProgress?.({ stage: 'processing', progress: 50, message: 'Using fallback generator...' })
+
+      const { PDFDocument, rgb, StandardFonts } = await import('pdf-lib')
+      
+      const pdfDoc = await PDFDocument.create()
+      const page = pdfDoc.addPage([612, 792]) // Letter size
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+      
+      // Extract text from HTML (simplified)
+      const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+      const lines = this.wrapText(textContent, 500, font, 12)
+      
+      let yPosition = 750
+      for (const line of lines) {
+        if (yPosition < 50) break // Prevent overflow
+        page.drawText(line, {
+          x: 50,
+          y: yPosition,
+          size: 12,
+          font,
+          color: rgb(0, 0, 0)
+        })
+        yPosition -= 20
+      }
+
+      onProgress?.({ stage: 'downloading', progress: 100, message: 'Download ready!' })
+      return await pdfDoc.save()
+    }
+  }
+
+  /**
+   * Convert edited HTML back to PDF (Alternative implementation)
+   */
+  async convertHtmlToPdfAlternative(
+    html: string,
+    originalStructure: any,
+    onProgress?: (progress: APIProgress) => void
+  ): Promise<Uint8Array> {
+    try {
+      onProgress?.({ stage: 'processing', progress: 0, message: 'Preparing content...' })
+      
+      // Create FormData for HTML content
+      const formData = new FormData()
+      const htmlBlob = new Blob([html], { type: 'text/html' })
+      formData.append('file', htmlBlob, 'content.html')
+      
+      // Call custom API endpoint (if you add HTML to PDF endpoint)
+      const response = await fetch(`${this.baseUrl}/api/html/to-pdf`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTML to PDF conversion failed: ${response.statusText}`)
+      }
+
+      onProgress?.({ stage: 'downloading', progress: 100, message: 'Download ready!' })
+      const pdfArrayBuffer = await response.arrayBuffer()
       
       return new Uint8Array(pdfArrayBuffer)
     } catch (error) {
@@ -418,37 +381,40 @@ class AdobePDFServices {
 }
 
 // Singleton instance
-let adobeService: AdobePDFServices | null = null
+let customService: CustomPDFServices | null = null
 
-export function initializeAdobeAPI(): AdobePDFServices {
-  const clientId = import.meta.env.VITE_ADOBE_CLIENT_ID
-  const accessToken = import.meta.env.VITE_ADOBE_ACCESS_TOKEN
+export function initializeCustomAPI(): CustomPDFServices {
+  const baseUrl = import.meta.env.VITE_PDF_API_BASE_URL || 'https://electric-virtual-proteins-olympics.trycloudflare.com'
   
-  if (!clientId || !accessToken) {
-    throw new Error('Adobe API credentials not found in environment variables')
+  if (!baseUrl) {
+    throw new Error('PDF API base URL not found in environment variables')
   }
   
-  if (!adobeService) {
-    adobeService = new AdobePDFServices(clientId, accessToken)
+  if (!customService) {
+    customService = new CustomPDFServices(baseUrl)
   }
-  return adobeService
+  return customService
 }
 
-export function getAdobeAPI(): AdobePDFServices {
-  if (!adobeService) {
-    return initializeAdobeAPI()
+export function getCustomAPI(): CustomPDFServices {
+  if (!customService) {
+    return initializeCustomAPI()
   }
-  return adobeService
+  return customService
 }
 
 /**
- * Check if Adobe API is configured
+ * Check if Custom API is configured
  */
-export function isAdobeAPIConfigured(): boolean {
-  const clientId = import.meta.env.VITE_ADOBE_CLIENT_ID
-  const accessToken = import.meta.env.VITE_ADOBE_ACCESS_TOKEN
-  return !!(clientId && accessToken)
+export function isCustomAPIConfigured(): boolean {
+  const baseUrl = import.meta.env.VITE_PDF_API_BASE_URL
+  return !!baseUrl
 }
+
+// Legacy exports for backward compatibility
+export const initializeAdobeAPI = initializeCustomAPI
+export const getAdobeAPI = getCustomAPI
+export const isAdobeAPIConfigured = isCustomAPIConfigured
 
 /**
  * Extract text content from PDF for preview

@@ -3,7 +3,7 @@ import { FileText, Download, RefreshCw, Settings, Layers } from 'lucide-react'
 import { Button } from '../UI/Button'
 import { useToast } from '../UI/Toast'
 import { useEditorStore } from '../../store/editorStore'
-import { getAdobeAPI, initializeAdobeAPI, isAdobeAPIConfigured } from '../../services/adobeAPI'
+import { getCustomAPI, initializeCustomAPI, isCustomAPIConfigured } from '../../services/adobeAPI'
 import { downloadBytesAsFile } from '../../utils/download'
 import PDFUploader from './PDFUploader'
 import PDFPreview from './PDFPreview'
@@ -30,21 +30,21 @@ export default function MainEditor() {
   const { addToast } = useToast()
   const [showApiDialog, setShowApiDialog] = useState(false)
   const [apiProgress, setApiProgress] = useState<APIProgress | null>(null)
-  const [isApiConfigured, setIsApiConfigured] = useState(isAdobeAPIConfigured())
+  const [isApiConfigured, setIsApiConfigured] = useState(isCustomAPIConfigured())
 
   const handleApiKeySubmit = useCallback(() => {
     try {
-      initializeAdobeAPI()
-      setIsApiConfigured(isAdobeAPIConfigured())
+      initializeCustomAPI()
+      setIsApiConfigured(isCustomAPIConfigured())
       addToast({
         title: 'API Configured',
-        description: 'Adobe PDF Services is ready to use',
+        description: 'Custom PDF Services is ready to use',
         variant: 'success'
       })
     } catch (error) {
       addToast({
         title: 'Configuration Error',
-        description: error instanceof Error ? error.message : 'Failed to configure Adobe API',
+        description: error instanceof Error ? error.message : 'Failed to configure Custom API',
         variant: 'destructive'
       })
     }
@@ -68,7 +68,7 @@ export default function MainEditor() {
     setApiStatus('converting')
     
     try {
-      const api = getAdobeAPI()
+      const api = getCustomAPI()
       
       let fileToConvert: File
       if ('file' in currentPdf) {
@@ -108,7 +108,7 @@ export default function MainEditor() {
     setApiStatus('generating')
     
     try {
-      const api = getAdobeAPI()
+      const api = getCustomAPI()
       const pdfBytes = await api.convertHtmlToPdf(
         editedContent,
         convertedContent.originalStructure,
