@@ -407,8 +407,8 @@ export function getCustomAPI(): CustomPDFServices {
  * Check if Custom API is configured
  */
 export function isCustomAPIConfigured(): boolean {
-  const baseUrl = import.meta.env.VITE_PDF_API_BASE_URL
-  return !!baseUrl
+  // Always return true since we have a default URL
+  return true
 }
 
 // Legacy exports for backward compatibility

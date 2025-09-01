@@ -30,12 +30,12 @@ export default function MainEditor() {
   const { addToast } = useToast()
   const [showApiDialog, setShowApiDialog] = useState(false)
   const [apiProgress, setApiProgress] = useState<APIProgress | null>(null)
-  const [isApiConfigured, setIsApiConfigured] = useState(isCustomAPIConfigured())
+  const [isApiConfigured, setIsApiConfigured] = useState(true)
 
   const handleApiKeySubmit = useCallback(() => {
     try {
       initializeCustomAPI()
-      setIsApiConfigured(isCustomAPIConfigured())
+      setIsApiConfigured(true)
       addToast({
         title: 'API Configured',
         description: 'Custom PDF Services is ready to use',
@@ -63,17 +63,8 @@ export default function MainEditor() {
     setApiStatus('converting')
     
     try {
-      // Initialize API if not configured
-      if (!isApiConfigured) {
-        try {
-          initializeCustomAPI()
-          setIsApiConfigured(true)
-        } catch (error) {
-          setShowApiDialog(true)
-          setApiStatus('idle')
-          return
-        }
-      }
+      // Initialize API
+      initializeCustomAPI()
       
       const api = getCustomAPI()
       
@@ -168,18 +159,16 @@ export default function MainEditor() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            disabled={apiStatus !== 'idle'}
             onClick={() => setShowApiDialog(true)}
-            disabled={apiStatus !== 'idle'}
           >
             <Settings className="h-4 w-4 mr-1" />
-            {isApiConfigured ? 'API Ready' : 'Configure API'}
+            API Settings
           </Button>
 
           {currentPdf && !convertedContent && (
             <Button
               onClick={handleConvertToHtml}
-              disabled={apiStatus !== 'idle' || !isApiConfigured}
+              disabled={apiStatus !== 'idle'}
               size="sm"
             >
               <RefreshCw className="h-4 w-4 mr-1" />

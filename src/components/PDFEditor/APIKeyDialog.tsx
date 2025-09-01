@@ -14,7 +14,7 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
   const [isConfigured, setIsConfigured] = useState(false)
 
   useEffect(() => {
-    setIsConfigured(isCustomAPIConfigured())
+    setIsConfigured(true) // Always configured since we have default URL
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
