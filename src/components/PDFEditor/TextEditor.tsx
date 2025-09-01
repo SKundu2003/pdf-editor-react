@@ -178,10 +178,11 @@ export default function TextEditor() {
 
           <select 
             onChange={(e) => execCommand('fontSize', e.target.value)}
+            defaultValue="3"
             className="text-sm border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-800"
           >
             <option value="1">Small</option>
-            <option value="3" selected>Normal</option>
+            <option value="3">Normal</option>
             <option value="5">Large</option>
             <option value="7">Extra Large</option>
           </select>
