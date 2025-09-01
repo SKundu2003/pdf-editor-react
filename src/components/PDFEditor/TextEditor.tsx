@@ -90,9 +90,11 @@ export default function TextEditor() {
 
   // Initialize editor content when converted content is available
   useEffect(() => {
-    if (convertedContent && convertedContent.html && editorRef.current && !isInitialized) {
+    if (convertedContent && convertedContent.html && editorRef.current) {
       try {
+        console.log('Initializing editor with content:', convertedContent.html.substring(0, 200) + '...')
         const cleanHtml = cleanHtmlContent(convertedContent.html)
+        console.log('Cleaned HTML:', cleanHtml.substring(0, 200) + '...')
         editorRef.current.innerHTML = cleanHtml
         updateEditedContent(cleanHtml)
         setIsInitialized(true)
@@ -100,7 +102,7 @@ export default function TextEditor() {
         // Focus the editor after a short delay
         setTimeout(() => {
           editorRef.current?.focus()
-        }, 100)
+        }, 200)
         
         console.log('Editor initialized with cleaned HTML content')
       } catch (error) {
@@ -112,7 +114,7 @@ export default function TextEditor() {
         })
       }
     }
-  }, [convertedContent, isInitialized, updateEditedContent, addToast, cleanHtmlContent])
+  }, [convertedContent, updateEditedContent, addToast, cleanHtmlContent])
 
   // Reset initialization when content changes
   useEffect(() => {

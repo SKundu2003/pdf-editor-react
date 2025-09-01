@@ -266,6 +266,7 @@ export const useEditorStore = create<EditorStore>()(
     },
     
     setConvertedContent: (content) => {
+      console.log('Setting converted content:', content)
       set({ 
         convertedContent: content, 
         editedContent: content?.html || '',

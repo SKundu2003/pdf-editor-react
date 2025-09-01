@@ -79,7 +79,13 @@ export default function MainEditor() {
       
       const content = await service.convertPdfToHtml(fileToConvert, (progress) => setApiProgress(progress))
       
-      console.log('Received content from API:', content)
+      console.log('Received content from API:', {
+        html: content.html?.substring(0, 200) + '...',
+        htmlLength: content.html?.length,
+        originalStructure: content.originalStructure,
+        fonts: content.fonts,
+        styles: content.styles
+      })
       
       setConvertedContent(content)
       setApiStatus('idle')
