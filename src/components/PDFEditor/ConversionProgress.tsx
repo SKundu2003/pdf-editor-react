@@ -1,6 +1,7 @@
 import React from 'react'
 import { FileText, Download, Loader2 } from 'lucide-react'
 import { Progress } from '../UI/Progress'
+import { cn } from '../../utils/cn'
 import type { APIProgress } from '../../types/editor'
 
 interface ConversionProgressProps {

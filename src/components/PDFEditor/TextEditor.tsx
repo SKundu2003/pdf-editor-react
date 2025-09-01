@@ -22,6 +22,12 @@ export default function TextEditor() {
     updateEditedContent(content)
   }
 
+  // Update editor content when converted content changes
+  useEffect(() => {
+    if (convertedContent && editorRef.current && isEditorReady) {
+      editorRef.current.setContent(convertedContent.html)
+    }
+  }, [convertedContent, isEditorReady])
   const handleSave = () => {
     markAsSaved()
     addToast({
@@ -141,8 +147,12 @@ export default function TextEditor() {
           onInit={(evt, editor) => {
             editorRef.current = editor
             setIsEditorReady(true)
+            // Set initial content if available
+            if (convertedContent) {
+              editor.setContent(convertedContent.html)
+            }
           }}
-          initialValue={editedContent}
+          initialValue={convertedContent?.html || editedContent}
           onEditorChange={handleEditorChange}
           init={{
             height: '100%',
@@ -151,9 +161,10 @@ export default function TextEditor() {
               'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
               'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
               'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-              'textcolor', 'colorpicker'
+              'textcolor', 'colorpicker', 'paste'
             ],
-            toolbar: false, // We use custom toolbar above
+            toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',
+            menubar: false,
             content_style: `
               body { 
                 font-family: Arial, sans-serif; 
@@ -163,6 +174,7 @@ export default function TextEditor() {
                 background: #ffffff;
                 margin: 0;
                 padding: 20px;
+                max-width: none;
               }
               h1, h2, h3, h4, h5, h6 { 
                 margin-top: 1em; 
@@ -183,6 +195,18 @@ export default function TextEditor() {
                 font-style: italic;
                 color: #6b7280;
               }
+              img {
+                max-width: 100%;
+                height: auto;
+              }
+              table {
+                border-collapse: collapse;
+                width: 100%;
+              }
+              table td, table th {
+                border: 1px solid #ddd;
+                padding: 8px;
+              }
             `,
             skin: 'oxide',
             content_css: 'default',
@@ -190,9 +214,17 @@ export default function TextEditor() {
             resize: false,
             statusbar: false,
             elementpath: false,
+            paste_data_images: true,
+            automatic_uploads: false,
             setup: (editor) => {
               editor.on('init', () => {
                 setIsEditorReady(true)
+                // Set content after editor is fully initialized
+                if (convertedContent) {
+                  setTimeout(() => {
+                    editor.setContent(convertedContent.html)
+                  }, 100)
+                }
               })
             }
           }}

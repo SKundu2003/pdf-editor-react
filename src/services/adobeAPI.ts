@@ -48,12 +48,12 @@ class CustomPDFServices {
         html: htmlContent,
         originalStructure: {
           pages: 1,
-          fonts: ['Arial', 'Times New Roman'],
-          colors: ['#000000', '#333333'],
+          fonts: ['Arial', 'Times New Roman', 'Helvetica'],
+          colors: ['#000000', '#333333', '#666666'],
           layout: 'single-column'
         },
-        fonts: ['Arial', 'Times New Roman'],
-        styles: []
+        fonts: ['Arial', 'Times New Roman', 'Helvetica'],
+        styles: ['body { font-family: Arial, sans-serif; line-height: 1.6; }']
       }
     } catch (error) {
       console.error('PDF to HTML conversion failed:', error)
