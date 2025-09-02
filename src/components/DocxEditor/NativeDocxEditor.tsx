@@ -29,6 +29,13 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
   // Load DOCX file into editor using backend API
   useEffect(() => {
     const loadDocxFile = async () => {
+      console.log('=== DOCX LOADING PROCESS STARTED ===')
+      console.log('Editor ref current:', !!editorRef.current)
+      console.log('DocumentEditor:', !!editorRef.current?.documentEditor)
+      console.log('DOCX file blob:', !!docxFile.blob)
+      console.log('DOCX file name:', docxFile.name)
+      console.log('DOCX file size:', docxFile.blob?.size)
+      
       if (!editorRef.current?.documentEditor || !docxFile.blob) {
         console.log('Editor not ready or no blob:', { 
           editor: !!editorRef.current?.documentEditor, 
@@ -41,40 +48,88 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
         setIsLoading(true)
         setError(null)
         
-        console.log('Loading DOCX file:', docxFile.name, 'Size:', docxFile.blob.size)
+        console.log('=== STARTING API CALL ===')
+        console.log('API URL:', `${BACKEND_API_URL}/import`)
+        console.log('File details:', {
+          name: docxFile.name,
+          size: docxFile.blob.size,
+          type: docxFile.blob.type
+        })
 
         // Create FormData to send DOCX file to backend
         const formData = new FormData()
         formData.append('file', docxFile.blob, docxFile.name)
         
-        console.log('Sending DOCX file to backend for SFDT conversion...')
+        console.log('FormData created, file appended with name:', docxFile.name)
+        console.log('Making fetch request to:', `${BACKEND_API_URL}/import`)
         
         // Call backend API to convert DOCX to SFDT
+        console.log('=== FETCH REQUEST STARTING ===')
         const response = await fetch(`${BACKEND_API_URL}/import`, {
           method: 'POST',
           body: formData,
           headers: {
             'Accept': 'application/json'
-          }
+          },
+          mode: 'cors'
         })
         
+        console.log('=== FETCH RESPONSE RECEIVED ===')
+        console.log('Response status:', response.status)
+        console.log('Response statusText:', response.statusText)
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+        console.log('Response ok:', response.ok)
+        console.log('Response type:', response.type)
+        console.log('Response url:', response.url)
+        
         if (!response.ok) {
-          const errorText = await response.text()
+          console.log('=== RESPONSE NOT OK ===')
+          let errorText = 'Unknown error'
+          try {
+            errorText = await response.text()
+            console.log('Error response text:', errorText)
+          } catch (textError) {
+            console.log('Failed to read error text:', textError)
+          }
           throw new Error(`Backend API error (${response.status}): ${errorText}`)
         }
         
-        const sfdtData = await response.json()
-        console.log('Received SFDT data from backend:', typeof sfdtData, Object.keys(sfdtData || {}))
+        console.log('=== PARSING JSON RESPONSE ===')
+        let sfdtData
+        try {
+          const responseText = await response.text()
+          console.log('Raw response text (first 500 chars):', responseText.substring(0, 500))
+          console.log('Full response length:', responseText.length)
+          
+          sfdtData = JSON.parse(responseText)
+          console.log('JSON parsed successfully')
+          console.log('SFDT data type:', typeof sfdtData)
+          console.log('SFDT data keys:', Object.keys(sfdtData || {}))
+          console.log('SFDT data preview:', JSON.stringify(sfdtData).substring(0, 200))
+        } catch (jsonError) {
+          console.error('JSON parsing failed:', jsonError)
+          throw new Error('Invalid JSON response from backend')
+        }
         
         // Validate SFDT data
         if (!sfdtData || typeof sfdtData !== 'object') {
+          console.error('Invalid SFDT data structure:', sfdtData)
           throw new Error('Invalid SFDT data received from backend')
         }
 
-        // Open SFDT document in editor
-        editorRef.current.documentEditor.open(JSON.stringify(sfdtData))
+        console.log('=== LOADING SFDT INTO EDITOR ===')
+        const sfdtString = JSON.stringify(sfdtData)
+        console.log('SFDT string length:', sfdtString.length)
+        console.log('SFDT string preview:', sfdtString.substring(0, 200))
         
-        console.log('SFDT document opened in editor successfully')
+        // Open SFDT document in editor
+        console.log('Calling editor.open() with SFDT data...')
+        editorRef.current.documentEditor.open(sfdtString)
+        
+        console.log('=== EDITOR LOADING COMPLETE ===')
+        console.log('Document loaded successfully')
+        console.log('Editor page count:', editorRef.current.documentEditor.pageCount)
+        console.log('Document name:', editorRef.current.documentEditor.documentName)
         
         // Set up change tracking
         editorRef.current.documentEditor.contentChange = (args: any) => {
@@ -84,11 +139,15 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
 
         addToast({
           title: 'Document Loaded',
-          description: 'DOCX file loaded successfully via backend API',
+          description: `DOCX file loaded successfully (${editorRef.current.documentEditor.pageCount} pages)`,
           variant: 'success'
         })
       } catch (error) {
-        console.error('Failed to load DOCX file:', error)
+        console.error('=== DOCX LOADING FAILED ===')
+        console.error('Error type:', error.constructor.name)
+        console.error('Error message:', error.message)
+        console.error('Error stack:', error.stack)
+        
         setError(error instanceof Error ? error.message : 'Failed to load document')
         addToast({
           title: 'Loading Error',
@@ -98,31 +157,40 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
         })
       } finally {
         setIsLoading(false)
+        console.log('=== DOCX LOADING PROCESS ENDED ===')
       }
     }
 
     // Wait for editor to be fully initialized
     const checkEditorReady = () => {
+      console.log('Checking if editor is ready...')
+      console.log('Editor ref:', !!editorRef.current)
+      console.log('DocumentEditor:', !!editorRef.current?.documentEditor)
+      
       if (editorRef.current?.documentEditor) {
         console.log('Editor is ready, loading document')
         loadDocxFile()
       } else {
-        console.log('Editor not ready, waiting...')
+        console.log('Editor not ready, waiting 500ms...')
         setTimeout(checkEditorReady, 500)
       }
     }
     
     // Start checking after a short delay
+    console.log('Starting editor ready check in 100ms...')
     const timeoutId = setTimeout(checkEditorReady, 100)
     
     return () => {
+      console.log('Cleaning up editor ready check timeout')
       clearTimeout(timeoutId)
     }
   }, [docxFile, addToast])
   
   // Handle editor creation
   const onEditorCreated = useCallback(() => {
-    console.log('DocumentEditor created and ready')
+    console.log('=== DOCUMENT EDITOR CREATED ===')
+    console.log('Editor instance:', !!editorRef.current)
+    console.log('DocumentEditor:', !!editorRef.current?.documentEditor)
   }, [])
 
   // Save document
