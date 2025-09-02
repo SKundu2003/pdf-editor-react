@@ -83,11 +83,16 @@ export default function APIKeyDialog({ isOpen, onClose, onSubmit }: APIKeyDialog
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
               Current service endpoint:
             </p>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
+            <p className="text-xs text-blue-700 dark:text-blue-300 font-mono bg-blue-100 dark:bg-blue-800 p-2 rounded">
               {import.meta.env.VITE_PDF_API_BASE_URL || 'https://slot-johnson-bend-internship.trycloudflare.com'}
             </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+              <strong>To change:</strong> Create a <code>.env</code> file in your project root with:
+              <br />
+              <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">VITE_PDF_API_BASE_URL=http://localhost:8000</code>
+            </p>
             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-              To change: Set VITE_PDF_API_BASE_URL in .env file
+              <strong>For local development:</strong> Make sure your backend server is running on the specified port.
             </p>
           </div>
 

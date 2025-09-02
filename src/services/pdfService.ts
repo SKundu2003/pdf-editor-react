@@ -28,20 +28,51 @@ class PDFService {
       
       onProgress?.({ stage: 'converting', progress: 25, message: 'Sending to server...' })
       
-      // Call backend API endpoint with proper headers
-      const response = await fetch(`${this.baseUrl}/api/pdf/to-html`, {
-        method: 'POST',
-        body: formData,
-        mode: 'cors',
-        headers: {
-          'Accept': 'text/html,application/json',
+      // Call backend API endpoint with proper headers and timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+      
+      let response: Response
+      try {
+        response = await fetch(`${this.baseUrl}/api/pdf/to-html`, {
+          method: 'POST',
+          body: formData,
+          mode: 'cors',
+          headers: {
+            'Accept': 'text/html,application/json',
+          },
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        
+        if (fetchError instanceof Error) {
+          if (fetchError.name === 'AbortError') {
+            throw new Error(`Request timeout: The PDF conversion service at ${this.baseUrl} did not respond within 30 seconds. Please check if the service is running.`)
+          }
+          
+          if (fetchError.message.includes('Failed to fetch')) {
+            throw new Error(`Cannot connect to PDF conversion service at ${this.baseUrl}. Please ensure:\n\n1. The backend service is running\n2. The URL is correct in your .env file\n3. CORS is properly configured\n4. No firewall is blocking the connection\n\nCurrent URL: ${this.baseUrl}`)
+          }
         }
-      })
+        
+        throw fetchError
+      }
 
       if (!response.ok) {
         const errorText = await response.text()
         console.error('API Error Response:', errorText)
-        throw new Error(`API Error: ${response.status} - ${response.statusText}`)
+        
+        if (response.status === 404) {
+          throw new Error(`PDF conversion endpoint not found at ${this.baseUrl}/api/pdf/to-html. Please verify the backend service is running and the endpoint exists.`)
+        } else if (response.status === 500) {
+          throw new Error(`Backend server error (${response.status}): ${errorText || response.statusText}`)
+        } else if (response.status === 413) {
+          throw new Error(`File too large: The PDF file exceeds the server's size limit.`)
+        } else {
+          throw new Error(`API Error (${response.status}): ${response.statusText}\n\nResponse: ${errorText}`)
+        }
       }
 
       onProgress?.({ stage: 'converting', progress: 75, message: 'Processing response...' })
@@ -64,10 +95,6 @@ class PDFService {
     } catch (error) {
       console.error('PDF to HTML conversion failed:', error)
       
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        throw new Error(`Cannot connect to backend API at ${this.baseUrl}. Please check if the server is running.`)
-      }
-
       throw error
     }
   }

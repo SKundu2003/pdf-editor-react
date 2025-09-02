@@ -101,10 +101,14 @@ export default function MainEditor() {
       setApiStatus('error', error instanceof Error ? error.message : 'Conversion failed')
       setApiProgress(null)
       
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('PDF conversion error:', errorMessage)
+      
       addToast({
         title: 'Conversion Failed',
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: 'destructive'
+        description: errorMessage,
+        variant: 'destructive',
+        duration: 10000 // Show error longer for debugging
       })
     }
   }, [currentPdf, isApiConfigured, setApiStatus, setConvertedContent, addToast])
