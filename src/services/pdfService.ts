@@ -237,6 +237,9 @@ class PDFService {
     const dangerousElements = container.querySelectorAll('script, style, meta, link, iframe, object, embed')
     dangerousElements.forEach(el => el.remove())
 
+    // Preserve inline styles and layout attributes
+    this.preserveLayoutStyles(container)
+
     // Enhance text nodes and preserve formatting
     this.enhanceTextNodes(container)
     
@@ -247,6 +250,40 @@ class PDFService {
     this.ensureParagraphStructure(container)
 
     return container.innerHTML
+  }
+
+  /**
+   * Preserve important layout styles from PDF conversion
+   */
+  private preserveLayoutStyles(container: HTMLElement) {
+    // Ensure text flows horizontally by fixing common vertical display issues
+    const allElements = container.querySelectorAll('*')
+    allElements.forEach(el => {
+      const element = el as HTMLElement
+      
+      // Fix elements that might be causing vertical text display
+      if (element.style.display === 'block' && element.textContent && element.textContent.length < 50) {
+        // Short text blocks should probably be inline or inline-block
+        if (!element.querySelector('p, div, h1, h2, h3, h4, h5, h6')) {
+          element.style.display = 'inline-block'
+        }
+      }
+      
+      // Ensure proper white-space handling
+      if (!element.style.whiteSpace) {
+        element.style.whiteSpace = 'normal'
+      }
+      
+      // Fix any elements with excessive line-height that might cause vertical spacing
+      if (element.style.lineHeight && parseFloat(element.style.lineHeight) > 3) {
+        element.style.lineHeight = '1.6'
+      }
+      
+      // Ensure text doesn't break into individual characters
+      if (element.style.wordBreak === 'break-all') {
+        element.style.wordBreak = 'break-word'
+      }
+    })
   }
 
   /**
@@ -271,10 +308,11 @@ class PDFService {
       // Skip empty or whitespace-only nodes
       if (!text.trim()) return
       
-      // Preserve important whitespace
-      if (text.includes('\n') || text.includes('\t')) {
+      // Only preserve whitespace for code-like content, not regular text
+      if ((text.includes('\n') || text.includes('\t')) && text.length > 50) {
         const span = document.createElement('span')
         span.className = 'preserve-spacing'
+        span.style.whiteSpace = 'pre-wrap'
         span.textContent = text
         textNode.parentNode?.replaceChild(span, textNode)
       }

@@ -76,7 +76,7 @@ export default function TextEditor() {
     const allElements = tempDiv.querySelectorAll('*')
     allElements.forEach(el => {
       // Keep only safe attributes
-      const safeAttributes = ['class', 'id', 'href', 'src', 'alt', 'title']
+      const safeAttributes = ['class', 'id', 'href', 'src', 'alt', 'title', 'style', 'width', 'height', 'align', 'valign', 'colspan', 'rowspan']
       const attributes = Array.from(el.attributes)
       attributes.forEach(attr => {
         if (!safeAttributes.includes(attr.name.toLowerCase())) {
@@ -407,20 +407,17 @@ export default function TextEditor() {
           suppressContentEditableWarning={true}
           className={cn(
             "min-h-full w-full p-6 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent",
-            "prose prose-slate dark:prose-invert max-w-none",
-            "[&>*]:mb-4 [&>h1]:text-2xl [&>h2]:text-xl [&>h3]:text-lg [&>h4]:text-base",
-            "[&>p]:leading-relaxed [&>ul]:list-disc [&>ol]:list-decimal [&>ul]:ml-6 [&>ol]:ml-6",
-            "[&>blockquote]:border-l-4 [&>blockquote]:border-slate-300 [&>blockquote]:pl-4 [&>blockquote]:italic",
-            "[&>table]:border-collapse [&>table]:border [&>table]:border-slate-300",
-            "[&>table>thead>tr>th]:border [&>table>thead>tr>th]:border-slate-300 [&>table>thead>tr>th]:p-2 [&>table>thead>tr>th]:bg-slate-50",
-            "[&>table>tbody>tr>td]:border [&>table>tbody>tr>td]:border-slate-300 [&>table>tbody>tr>td]:p-2",
+            "text-slate-900 dark:text-slate-100",
             "focus-within:shadow-sm transition-shadow duration-200"
           )}
           style={{
             minHeight: '300px',
             fontSize: '16px',
             lineHeight: '1.7',
-            color: 'inherit'
+            color: 'inherit',
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word'
           }}
         />
       </div>
