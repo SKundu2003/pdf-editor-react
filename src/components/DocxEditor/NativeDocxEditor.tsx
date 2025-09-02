@@ -374,7 +374,6 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
           created={onEditorCreated}
           className="docx-editor-container"
           serviceUrl={BACKEND_API_URL}
-
         />
       </div>
 
@@ -391,3 +390,6 @@ const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps
       )}
     </div>
   )
+}
+
+export default NativeDocxEditor
