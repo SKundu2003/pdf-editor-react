@@ -18,7 +18,7 @@ interface NativeDocxEditorProps {
   onExport?: (blob: Blob, filename: string) => void
 }
 
-export default function NativeDocxEditor({ docxFile, onClose, onExport }: NativeDocxEditorProps) {
+const NativeDocxEditor = ({ docxFile, onClose, onExport }: NativeDocxEditorProps) => {
   const editorRef = useRef<DocumentEditorContainerComponent>(null)
   const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
@@ -391,4 +391,3 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
       )}
     </div>
   )
-}
