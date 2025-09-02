@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { DocumentEditorContainerComponent, Toolbar } from '@syncfusion/ej2-react-documenteditor'
+import { DocumentEditorContainerComponent } from '@syncfusion/ej2-react-documenteditor'
 import { registerLicense } from '@syncfusion/ej2-base'
 import { Save, Download, FileText, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '../UI/Button'
@@ -8,7 +8,7 @@ import { cn } from '../../utils/cn'
 import type { DocxFile } from '../../types/docx'
 
 // Register Syncfusion license (you'll need to get a free community license)
-// registerLicense('YOUR_SYNCFUSION_LICENSE_KEY_HERE')
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NCaF1cXmhIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEFiWH5fcnVVRWVfVkN3Wg==')
 
 interface NativeDocxEditorProps {
   docxFile: DocxFile
@@ -27,23 +27,43 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
   // Load DOCX file into editor
   useEffect(() => {
     const loadDocxFile = async () => {
-      if (!editorRef.current || !docxFile.blob) return
+      if (!editorRef.current?.documentEditor || !docxFile.blob) {
+        console.log('Editor not ready or no blob:', { 
+          editor: !!editorRef.current?.documentEditor, 
+          blob: !!docxFile.blob 
+        })
+        return
+      }
 
       try {
         setIsLoading(true)
         setError(null)
+        
+        console.log('Loading DOCX file:', docxFile.name, 'Size:', docxFile.blob.size)
 
         // Convert blob to base64 for Syncfusion editor
         const arrayBuffer = await docxFile.blob.arrayBuffer()
-        const base64String = btoa(
-          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        )
+        const uint8Array = new Uint8Array(arrayBuffer)
+        
+        // Convert to base64 properly
+        let binary = ''
+        const chunkSize = 8192
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.subarray(i, i + chunkSize)
+          binary += String.fromCharCode.apply(null, Array.from(chunk))
+        }
+        const base64String = btoa(binary)
+        
+        console.log('Base64 conversion complete, length:', base64String.length)
 
         // Open document in editor
-        editorRef.current.documentEditor.open(base64String)
+        editorRef.current.documentEditor.open(base64String, 'Docx')
+        
+        console.log('Document opened in editor')
         
         // Set up change tracking
-        editorRef.current.documentEditor.contentChange = () => {
+        editorRef.current.documentEditor.contentChange = (args: any) => {
+          console.log('Content changed:', args)
           setHasUnsavedChanges(true)
         }
 
@@ -54,6 +74,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
         })
       } catch (error) {
         console.error('Failed to load DOCX file:', error)
+        console.error('Error details:', error)
         setError(error instanceof Error ? error.message : 'Failed to load document')
         addToast({
           title: 'Loading Error',
@@ -65,8 +86,29 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
       }
     }
 
-    loadDocxFile()
+    // Wait for editor to be fully initialized
+    const checkEditorReady = () => {
+      if (editorRef.current?.documentEditor) {
+        console.log('Editor is ready, loading document')
+        loadDocxFile()
+      } else {
+        console.log('Editor not ready, waiting...')
+        setTimeout(checkEditorReady, 500)
+      }
+    }
+    
+    // Start checking after a short delay
+    const timeoutId = setTimeout(checkEditorReady, 100)
+    
+    return () => {
+      clearTimeout(timeoutId)
+    }
   }, [docxFile, addToast])
+  
+  // Handle editor creation
+  const onEditorCreated = useCallback(() => {
+    console.log('DocumentEditor created and ready')
+  }, [])
 
   // Save document
   const handleSave = useCallback(() => {
@@ -97,7 +139,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
       setIsExporting(true)
       
       // Export document as DOCX
-      const docxBlob = editorRef.current.documentEditor.saveAsBlob('Docx')
+      const docxBlob = await editorRef.current.documentEditor.saveAsBlob('Docx')
       const filename = docxFile.name.replace('.docx', '_edited.docx')
       
       if (onExport) {
@@ -139,7 +181,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
       setIsExporting(true)
       
       // Export document as PDF
-      const pdfBlob = editorRef.current.documentEditor.saveAsBlob('Pdf')
+      const pdfBlob = await editorRef.current.documentEditor.saveAsBlob('Pdf')
       const filename = docxFile.name.replace('.docx', '_edited.pdf')
       
       const url = URL.createObjectURL(pdfBlob)
@@ -243,7 +285,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
         <DocumentEditorContainerComponent
           ref={editorRef}
           height="100%"
-          serviceUrl="https://ej2services.syncfusion.com/production/web-services/api/documenteditor/"
+          width="100%"
           enableToolbar={true}
           enableLocalPaste={true}
           enableEditor={true}
@@ -269,6 +311,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           enableTrackChanges={true}
           enableSearch={true}
           enableOptionsPane={true}
+          created={onEditorCreated}
           className="docx-editor-container"
         />
       </div>
