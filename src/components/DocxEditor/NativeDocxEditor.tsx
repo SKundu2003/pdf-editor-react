@@ -313,6 +313,8 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           enableOptionsPane={true}
           created={onEditorCreated}
           className="docx-editor-container"
+          serviceUrl="https://services.syncfusion.com/react/production/api/documenteditor/"
+
         />
       </div>
 
