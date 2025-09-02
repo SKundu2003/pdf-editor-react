@@ -74,3 +74,31 @@ html, body, #root {
 .slide-in-from-bottom-2 {
   animation: slideInFromBottom 0.2s ease-out;
 }
+
+/* Syncfusion DOCX Editor Styles */
+.docx-editor-container {
+  height: 100% !important;
+}
+
+.docx-editor-container .e-de-container {
+  height: 100% !important;
+}
+
+.docx-editor-container .e-de-container .e-de-container-inner {
+  height: 100% !important;
+}
+
+/* Dark mode support for DOCX editor */
+.dark .docx-editor-container {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+.dark .docx-editor-container .e-toolbar {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.dark .docx-editor-container .e-de-container {
+  background-color: #1e293b;
+}

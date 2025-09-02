@@ -1,9 +1,7 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react'
-import { Save, Download, FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from 'lucide-react'
+import React, { useState } from 'react'
+import { FileText, Zap } from 'lucide-react'
 import { Button } from '../UI/Button'
-import { useToast } from '../UI/Toast'
-import { getDocxService } from '../../services/docxService'
-import { cn } from '../../utils/cn'
+import NativeDocxEditor from './NativeDocxEditor'
 import type { DocxFile } from '../../types/docx'
 
 interface DocxTextEditorProps {
@@ -12,140 +10,49 @@ interface DocxTextEditorProps {
 }
 
 export default function DocxTextEditor({ docxFile, onClose }: DocxTextEditorProps) {
-  const { addToast } = useToast()
-  const editorRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [editedContent, setEditedContent] = useState('')
-  const [originalContent, setOriginalContent] = useState('')
+  const [useNativeEditor, setUseNativeEditor] = useState(true)
 
-  // Load DOCX content for editing
-  useEffect(() => {
-    const loadDocxContent = async () => {
-      try {
-        setIsLoading(true)
-        const docxService = getDocxService()
-        const { html, rawText } = await docxService.extractDocxContent(docxFile.blob)
+  // Use native DOCX editor for better formatting preservation
+  if (useNativeEditor) {
+    return <NativeDocxEditor docxFile={docxFile} onClose={onClose} />
+  }
+
+  // Fallback option selector (in case native editor fails)
+  return (
+    <div className="h-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="text-center space-y-6 max-w-md">
+        <div className="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+          <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+        </div>
         
-        console.log('Loaded DOCX content:', { html: html.substring(0, 200), rawText: rawText.substring(0, 200) })
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Choose Editor Type</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            Select how you'd like to edit your DOCX document
+          </p>
+          
+          <div className="space-y-3">
+            <Button 
+              onClick={() => setUseNativeEditor(true)}
+              className="w-full"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Native DOCX Editor (Recommended)
+            </Button>
+            
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Preserves full formatting, supports all DOCX features
+            </p>
+          </div>
+        </div>
         
-        const contentToUse = html || rawText || 'No content could be extracted from this document.'
-        setOriginalContent(contentToUse)
-        setEditedContent(contentToUse)
-        
-        if (editorRef.current) {
-          editorRef.current.innerHTML = contentToUse
-        }
-        
-        addToast({
-          title: 'Document Loaded',
-          description: 'DOCX content is ready for editing',
-          variant: 'success'
-        })
-      } catch (error) {
-        console.error('Failed to load DOCX content:', error)
-        addToast({
-          title: 'Loading Error',
-          description: error instanceof Error ? error.message : 'Failed to load document content',
-          variant: 'destructive'
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadDocxContent()
-  }, [docxFile, addToast])
-
-  // Handle content changes
-  const handleContentChange = useCallback(() => {
-    if (!editorRef.current || isLoading) return
-    
-    const content = editorRef.current.innerHTML
-    setEditedContent(content)
-    setHasUnsavedChanges(content !== originalContent)
-  }, [originalContent, isLoading])
-
-  // Handle input events
-  const handleInput = useCallback(() => {
-    handleContentChange()
-  }, [handleContentChange])
-
-  // Save changes
-  const handleSave = useCallback(() => {
-    setHasUnsavedChanges(false)
-    addToast({
-      title: 'Changes Saved',
-      description: 'Your edits have been saved locally',
-      variant: 'success'
-    })
-  }, [addToast])
-
-  // Export as DOCX
-  const handleExport = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const docxService = getDocxService()
-      
-      const docxBlob = await docxService.createDocxFromHtml(editedContent, docxFile.name)
-      docxService.downloadDocx(docxBlob, docxFile.name.replace('.docx', '_edited.docx'))
-      
-      setHasUnsavedChanges(false)
-      
-      addToast({
-        title: 'Export Complete',
-        description: 'Edited document has been downloaded',
-        variant: 'success'
-      })
-    } catch (error) {
-      addToast({
-        title: 'Export Failed',
-        description: error instanceof Error ? error.message : 'Failed to export document',
-        variant: 'destructive'
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [editedContent, docxFile.name, addToast])
-
-  // Execute formatting commands
-  const execCommand = useCallback((command: string, value?: string) => {
-    try {
-      document.execCommand(command, false, value)
-      setTimeout(() => {
-        handleContentChange()
-        editorRef.current?.focus()
-      }, 10)
-    } catch (error) {
-      console.error('Error executing command:', error)
-    }
-  }, [handleContentChange])
-
-  // Handle keyboard shortcuts
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key) {
-        case 's':
-          e.preventDefault()
-          handleSave()
-          return
-        case 'b':
-          e.preventDefault()
-          execCommand('bold')
-          return
-        case 'i':
-          e.preventDefault()
-          execCommand('italic')
-          return
-        case 'u':
-          e.preventDefault()
-          execCommand('underline')
-          return
-      }
-    }
-  }, [handleSave, execCommand])
-
-  if (isLoading) {
+        <Button variant="outline" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+    </div>
+  )
+}
     return (
       <div className="h-full flex items-center justify-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
         <div className="text-center space-y-4">

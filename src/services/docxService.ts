@@ -139,7 +139,9 @@ class DocxService {
   }
 
   /**
-   * Extract text content from DOCX for editing
+   * Extract text content from DOCX for editing (legacy fallback)
+   * Note: This is now primarily used for fallback scenarios
+   * The native DOCX editor handles files directly without conversion
    */
   async extractDocxContent(docxBlob: Blob): Promise<{ html: string; rawText: string }> {
     try {
@@ -167,7 +169,8 @@ class DocxService {
   }
 
   /**
-   * Create DOCX from HTML content
+   * Create DOCX from HTML content (legacy fallback)
+   * Note: Native DOCX editor exports directly without HTML conversion
    */
   async createDocxFromHtml(htmlContent: string, originalFileName: string): Promise<Blob> {
     try {
