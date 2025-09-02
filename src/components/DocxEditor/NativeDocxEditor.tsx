@@ -313,7 +313,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           enableOptionsPane={true}
           created={onEditorCreated}
           className="docx-editor-container"
-          serviceUrl="https://effect-solo-textbook-minor.trycloudflare.com/api/documenteditor/"
+          serviceUrl="https://effect-solo-textbook-minor.trycloudflare.com/api/documenteditor/import"
 
         />
       </div>
