@@ -10,6 +10,8 @@ import type { DocxFile } from '../../types/docx'
 // Register Syncfusion license (you'll need to get a free community license)
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NCaF1cXmhIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEFiWH5fcnVVRWVfVkN3Wg==')
 
+const BACKEND_API_URL = 'https://effect-solo-textbook-minor.trycloudflare.com/api/documenteditor'
+
 interface NativeDocxEditorProps {
   docxFile: DocxFile
   onClose: () => void
@@ -24,7 +26,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
   const [isExporting, setIsExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Load DOCX file into editor
+  // Load DOCX file into editor using backend API
   useEffect(() => {
     const loadDocxFile = async () => {
       if (!editorRef.current?.documentEditor || !docxFile.blob) {
@@ -41,25 +43,38 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
         
         console.log('Loading DOCX file:', docxFile.name, 'Size:', docxFile.blob.size)
 
-        // Convert blob to base64 for Syncfusion editor
-        const arrayBuffer = await docxFile.blob.arrayBuffer()
-        const uint8Array = new Uint8Array(arrayBuffer)
+        // Create FormData to send DOCX file to backend
+        const formData = new FormData()
+        formData.append('file', docxFile.blob, docxFile.name)
         
-        // Convert to base64 properly
-        let binary = ''
-        const chunkSize = 8192
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-          const chunk = uint8Array.subarray(i, i + chunkSize)
-          binary += String.fromCharCode.apply(null, Array.from(chunk))
+        console.log('Sending DOCX file to backend for SFDT conversion...')
+        
+        // Call backend API to convert DOCX to SFDT
+        const response = await fetch(`${BACKEND_API_URL}/import`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Backend API error (${response.status}): ${errorText}`)
         }
-        const base64String = btoa(binary)
         
-        console.log('Base64 conversion complete, length:', base64String.length)
+        const sfdtData = await response.json()
+        console.log('Received SFDT data from backend:', typeof sfdtData, Object.keys(sfdtData || {}))
+        
+        // Validate SFDT data
+        if (!sfdtData || typeof sfdtData !== 'object') {
+          throw new Error('Invalid SFDT data received from backend')
+        }
 
-        // Open document in editor
-        editorRef.current.documentEditor.open(base64String, 'Docx')
+        // Open SFDT document in editor
+        editorRef.current.documentEditor.open(JSON.stringify(sfdtData))
         
-        console.log('Document opened in editor')
+        console.log('SFDT document opened in editor successfully')
         
         // Set up change tracking
         editorRef.current.documentEditor.contentChange = (args: any) => {
@@ -69,17 +84,17 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
 
         addToast({
           title: 'Document Loaded',
-          description: 'DOCX file loaded successfully with full formatting',
+          description: 'DOCX file loaded successfully via backend API',
           variant: 'success'
         })
       } catch (error) {
         console.error('Failed to load DOCX file:', error)
-        console.error('Error details:', error)
         setError(error instanceof Error ? error.message : 'Failed to load document')
         addToast({
           title: 'Loading Error',
-          description: 'Failed to load DOCX file in editor',
-          variant: 'destructive'
+          description: error instanceof Error ? error.message : 'Failed to load DOCX file in editor',
+          variant: 'destructive',
+          duration: 10000
         })
       } finally {
         setIsLoading(false)
@@ -138,8 +153,28 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
     try {
       setIsExporting(true)
       
-      // Export document as DOCX
-      const docxBlob = await editorRef.current.documentEditor.saveAsBlob('Docx')
+      // Get SFDT content from editor
+      const sfdtContent = editorRef.current.documentEditor.serialize()
+      
+      // Send SFDT to backend for DOCX export
+      const response = await fetch(`${BACKEND_API_URL}/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        },
+        body: JSON.stringify({
+          sfdt: sfdtContent,
+          fileName: docxFile.name.replace('.docx', '_edited.docx')
+        })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Export failed (${response.status}): ${errorText}`)
+      }
+      
+      const docxBlob = await response.blob()
       const filename = docxFile.name.replace('.docx', '_edited.docx')
       
       if (onExport) {
@@ -165,8 +200,9 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
     } catch (error) {
       addToast({
         title: 'Export Failed',
-        description: 'Failed to export document',
-        variant: 'destructive'
+        description: error instanceof Error ? error.message : 'Failed to export document',
+        variant: 'destructive',
+        duration: 10000
       })
     } finally {
       setIsExporting(false)
@@ -180,8 +216,28 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
     try {
       setIsExporting(true)
       
-      // Export document as PDF
-      const pdfBlob = await editorRef.current.documentEditor.saveAsBlob('Pdf')
+      // Get SFDT content from editor
+      const sfdtContent = editorRef.current.documentEditor.serialize()
+      
+      // Send SFDT to backend for PDF export
+      const response = await fetch(`${BACKEND_API_URL}/exportpdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/pdf'
+        },
+        body: JSON.stringify({
+          sfdt: sfdtContent,
+          fileName: docxFile.name.replace('.docx', '_edited.pdf')
+        })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`PDF export failed (${response.status}): ${errorText}`)
+      }
+      
+      const pdfBlob = await response.blob()
       const filename = docxFile.name.replace('.docx', '_edited.pdf')
       
       const url = URL.createObjectURL(pdfBlob)
@@ -201,8 +257,9 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
     } catch (error) {
       addToast({
         title: 'PDF Export Failed',
-        description: 'Failed to export document as PDF',
-        variant: 'destructive'
+        description: error instanceof Error ? error.message : 'Failed to export document as PDF',
+        variant: 'destructive',
+        duration: 10000
       })
     } finally {
       setIsExporting(false)
@@ -219,7 +276,10 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           <div>
             <h3 className="text-lg font-semibold mb-2">Failed to Load Document</h3>
             <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
-            <Button onClick={onClose}>Close Editor</Button>
+            <div className="space-y-2">
+              <Button onClick={() => window.location.reload()}>Retry</Button>
+              <Button variant="outline" onClick={onClose}>Close Editor</Button>
+            </div>
           </div>
         </div>
       </div>
@@ -236,7 +296,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           <div>
             <h3 className="text-lg font-semibold mb-2">Loading Document</h3>
             <p className="text-slate-600 dark:text-slate-400">
-              Initializing DOCX editor with full formatting...
+              Converting DOCX to SFDT format via backend API...
             </p>
           </div>
         </div>
@@ -313,7 +373,7 @@ export default function NativeDocxEditor({ docxFile, onClose, onExport }: Native
           enableOptionsPane={true}
           created={onEditorCreated}
           className="docx-editor-container"
-          serviceUrl="https://effect-solo-textbook-minor.trycloudflare.com/api/documenteditor/import"
+          serviceUrl={BACKEND_API_URL}
 
         />
       </div>
