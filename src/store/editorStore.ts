@@ -267,11 +267,13 @@ export const useEditorStore = create<EditorStore>()(
     
     setConvertedContent: (content) => {
       console.log('Setting converted content:', content)
+      console.log('HTML content preview:', content?.html?.substring(0, 500))
       set({ 
         convertedContent: content, 
         editedContent: content?.html || '',
         isEditing: true,
-        hasUnsavedChanges: false
+        hasUnsavedChanges: false,
+        apiStatus: 'idle'
       })
     },
     

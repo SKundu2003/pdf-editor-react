@@ -131,17 +131,16 @@ export default function TextEditor() {
     if (!editorRef.current || !isInitialized) return
     
     try {
-      saveCursorPosition()
       const content = editorRef.current.innerHTML
+      console.log('Content changed, length:', content.length)
       updateEditedContent(content)
     } catch (error) {
       console.error('Error updating content:', error)
     }
-  }, [isInitialized, saveCursorPosition, updateEditedContent])
+  }, [isInitialized, updateEditedContent])
 
   // Handle input events
   const handleInput = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
     handleContentChange()
   }, [handleContentChange])
 
@@ -188,7 +187,6 @@ export default function TextEditor() {
 
   const execCommand = useCallback((command: string, value?: string) => {
     try {
-      saveCursorPosition()
       document.execCommand(command, false, value)
       
       // Small delay to let the command execute
@@ -199,7 +197,7 @@ export default function TextEditor() {
     } catch (error) {
       console.error('Error executing command:', error)
     }
-  }, [saveCursorPosition, handleContentChange])
+  }, [handleContentChange])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Handle keyboard shortcuts
@@ -235,24 +233,7 @@ export default function TextEditor() {
       }
     }
     
-    // Handle special keys that might cause cursor issues
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-      saveCursorPosition()
-    }
-  }, [handleSave, execCommand, saveCursorPosition])
-
-  // Handle selection changes
-  const handleSelectionChange = useCallback(() => {
-    if (document.activeElement === editorRef.current) {
-      saveCursorPosition()
-    }
-  }, [saveCursorPosition])
-
-  // Add selection change listener
-  useEffect(() => {
-    document.addEventListener('selectionchange', handleSelectionChange)
-    return () => document.removeEventListener('selectionchange', handleSelectionChange)
-  }, [handleSelectionChange])
+  }, [handleSave, execCommand])
 
   if (!convertedContent) {
     return (
@@ -423,6 +404,7 @@ export default function TextEditor() {
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
+          suppressContentEditableWarning={true}
           className={cn(
             "min-h-full w-full p-6 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent",
             "prose prose-slate dark:prose-invert max-w-none",
@@ -440,7 +422,6 @@ export default function TextEditor() {
             lineHeight: '1.7',
             color: 'inherit'
           }}
-          suppressContentEditableWarning={true}
         />
       </div>
 

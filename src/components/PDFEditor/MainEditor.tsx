@@ -82,6 +82,7 @@ export default function MainEditor() {
       console.log('Received content from API:', {
         html: content.html?.substring(0, 200) + '...',
         htmlLength: content.html?.length,
+        fullHtml: content.html, // Log full HTML for debugging
         originalStructure: content.originalStructure,
         fonts: content.fonts,
         styles: content.styles
@@ -93,7 +94,7 @@ export default function MainEditor() {
       
       addToast({
         title: 'Conversion Complete',
-        description: 'PDF has been converted to HTML for editing',
+        description: `PDF converted successfully. ${content.html?.length || 0} characters loaded.`,
         variant: 'success'
       })
     } catch (error) {
