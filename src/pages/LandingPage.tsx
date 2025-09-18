@@ -1,8 +1,22 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import UploadDropzone from '../components/UploadDropzone'
+import { usePdf } from '../context/PdfContext'
 
 export default function LandingPage() {
+  const navigate = useNavigate()
+  const { loadFromFiles } = usePdf()
+
+  const handleFilesSelected = async (files: File[]) => {
+    try {
+      await loadFromFiles(files)
+      navigate('/editor')
+    } catch (error) {
+      console.error('Error loading files:', error)
+      // Handle error appropriately in the UI
+    }
+  }
+
   return (
     <div>
       <section className="relative overflow-hidden">
@@ -42,7 +56,7 @@ export default function LandingPage() {
 
       <section id="upload" className="max-w-4xl mx-auto px-6 pb-16">
         <h2 className="text-2xl font-bold mb-4">Try it now</h2>
-        <UploadDropzone redirectToEditor />
+        <UploadDropzone onFilesSelected={handleFilesSelected} />
       </section>
     </div>
   )

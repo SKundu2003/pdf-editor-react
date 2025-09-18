@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import type { TextAnnotation } from '../types/pdf'
+import type { TextAnnotation, EditedText } from '../types/pdf'
 
 export type ImageAnnotation = {
   pageIndex: number
@@ -95,6 +95,32 @@ export async function addTextAnnotations(pdfBytes: Uint8Array, annotations: Text
       console.error('Error adding text annotation:', error, ann)
     }
   }
+  return await doc.save()
+}
+
+export async function editTextInPdf(pdfBytes: Uint8Array, edit: EditedText): Promise<Uint8Array> {
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const page = doc.getPage(edit.pageNumber - 1)
+
+  // Cover the old text with a white rectangle
+  page.drawRectangle({
+    x: edit.x,
+    y: edit.y,
+    width: edit.width,
+    height: edit.height,
+    color: rgb(1, 1, 1),
+  })
+
+  // Draw the new text
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  page.drawText(edit.newText, {
+    x: edit.x,
+    y: edit.y,
+    size: edit.height, // Approximate font size
+    font: helvetica,
+    color: rgb(0, 0, 0),
+  })
+
   return await doc.save()
 }
 

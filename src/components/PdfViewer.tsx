@@ -1,241 +1,181 @@
-import { Document, Page } from 'react-pdf'
-import type { TextItem } from 'pdfjs-dist/types/src/display/api'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { TextAnnotation, TextFormat } from '../types/pdf'
-import TextEditor from './TextEditor'
+import React, { useEffect, useRef } from 'react'
+import WebViewer from '@pdftron/webviewer'
+import { usePdfState } from '../hooks/usePdfState'
 
-// NOTE: worker is configured in setupPdfWorker.ts which is imported in main.tsx.
-// Do NOT set pdfjs.GlobalWorkerOptions.workerSrc here.
-
-type PdfViewerProps = {
-  pdfBytes: Uint8Array
-  pageNumber: number
-  scale: number
-  onDocumentLoad?: (numPages: number) => void
-  mode?: 'select' | 'text'
-  textColor?: string
-  textSize?: number
-  onCommitText?: (ann: TextAnnotation) => void
-  previewAnnotations?: TextAnnotation[]
-}
-
-export default function PdfViewer({
-  pdfBytes,
-  pageNumber,
-  scale,
-  onDocumentLoad,
-  mode = 'select',
-  textColor = '#111827',
-  textSize = 14,
-  onCommitText,
-  previewAnnotations = []
-}: PdfViewerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
-  const [activeEditor, setActiveEditor] = useState<{
-    id?: string
+interface PdfViewerProps {
+  pdfBytes: Uint8Array | null
+  onDocumentLoaded?: (pageCount: number) => void
+  mode: 'select' | 'text'
+  onCommitText: (annotation: any) => void
+  onEditText: (edit: {
+    oldText: string
+    newText: string
+    pageNumber: number
     x: number
     y: number
-    xPoints: number
-    yPoints: number
-    text: string
-    formats?: TextFormat[]
-    pageNumber?: number
-    isEditing?: boolean
-  } | null>(null)
+    width: number
+    height: number
+  }) => void
+  textColor: string
+  textSize: number
+  previewAnnotations: any[]
+}
 
-  const [pageSize, setPageSize] = useState<{ width: number; height: number } | null>(null)
+const PdfViewer = ({
+  pdfBytes,
+  onDocumentLoaded,
+  mode,
+  onCommitText,
+  onEditText,
+  textColor,
+  textSize,
+  previewAnnotations
+}: PdfViewerProps) => {
+  const viewerDiv = useRef<HTMLDivElement>(null)
+  const viewerInstanceRef = useRef<any>(null)
+  const { setNumPages } = usePdfState()
 
-  const file = useMemo(() => ({ data: new Uint8Array(pdfBytes) }), [pdfBytes])
+  useEffect(() => {
+    if (!viewerDiv.current || viewerInstanceRef.current) return
 
-  // Utility: PDF points -> CSS pixels at given scale
-  const pointsToPx = (pt: number) => (pt / 72) * 96 * scale
-  // Utility: CSS pixels -> PDF points
-  const pxToPoints = (px: number) => (px / scale) * (72 / 96)
+    const element = viewerDiv.current
 
-  // Open editor for an existing annotation (by annotation object)
-  const handleTextEdit = useCallback((annotation: TextAnnotation) => {
-    if (!containerRef.current || annotation.x === undefined || annotation.y === undefined) return
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const xPx = pointsToPx(annotation.x)
-    const yPx = containerRect.height - pointsToPx(annotation.y) // flip Y axis
-    setActiveEditor({
-      id: annotation.id,
-      x: xPx - 5,
-      y: yPx - 5,
-      xPoints: annotation.x,
-      yPoints: annotation.y,
-      text: annotation.text || '',
-      formats: annotation.formats || [],
-      pageNumber: annotation.pageNumber || pageNumber
-    })
-  }, [scale, pageNumber]) // eslint-disable-line
-
-  // Save/commit text from editor (text is plain text, formats is array)
-  const handleTextCommit = useCallback((text: string = '', formats: TextFormat[] = []) => {
-    if (!activeEditor) return
-    const annotation: TextAnnotation = {
-      id: activeEditor.id || `text-${Date.now()}`,
-      type: 'text',
-      x: activeEditor.xPoints,
-      y: activeEditor.yPoints,
-      text: text || '',
-      formats: formats || activeEditor.formats || [],
-      style: {
-        color: textColor || '#000000',
-        fontSize: activeEditor?.pageNumber ? (textSize || 12) : (textSize || 12) // keep numeric value for PDF rendering
+    WebViewer(
+      {
+        path: '/lib/webviewer',
+        licenseKey:
+          import.meta.env.VITE_PDFTRON_LICENSE_KEY ||
+          'demo:1757879970041:6045741f0300000000c1c10a42adeff7132c88744a5bed804c8c678ad5',
+        fullAPI: true,
+        enableFilePicker: false,
+        enableTextEditing: true,
+        enableRedaction: true,
+        showToolbarControl: true
       },
-      pageNumber: activeEditor.pageNumber || pageNumber
-    }
+      element
+    )
+      .then(async (instance) => {
+        viewerInstanceRef.current = instance
 
-    onCommitText?.(annotation)
-    setActiveEditor(null)
-  }, [activeEditor, onCommitText, textColor, textSize, pageNumber])
+        const { Core, UI } = instance
+        const { documentViewer, annotationManager, Tools } = Core
 
-  // Edit inline (click on preview annotation)
-  const handleInlineEdit = (annotation: TextAnnotation) => {
-    if (!containerRef.current || annotation.x === undefined || annotation.y === undefined) return
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const xPx = pointsToPx(annotation.x)
-    const yPx = containerRect.height - pointsToPx(annotation.y)
-    setActiveEditor({
-      id: annotation.id,
-      x: xPx - 5,
-      y: yPx - 5,
-      xPoints: annotation.x,
-      yPoints: annotation.y,
-      text: annotation.text || '',
-      formats: annotation.formats || [],
-      pageNumber: annotation.pageNumber || pageNumber,
-      isEditing: true
-    })
-  }
+        // Enable text editing features
+        UI.enableFeatures([UI.Feature.TextSelection])
+        UI.setToolMode('TextSelect')
 
-  // Page click => add new text if in text mode
-  const handlePageClick = useCallback((e: React.MouseEvent) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+        // Add event listeners
+        documentViewer.addEventListener('documentLoaded', () => {
+          const pageCount = documentViewer.getPageCount()
+          setNumPages(pageCount)
+          onDocumentLoaded?.(pageCount)
+        })
 
-    const xPoints = pxToPoints(x)
-    const yPoints = pxToPoints(rect.height - y) // flip Y
+        documentViewer.addEventListener('textEditorChanged', (oldText, newText, annotation) => {
+          if (!annotation) return
+          onEditText({
+            oldText,
+            newText,
+            pageNumber: annotation.PageNumber,
+            x: annotation.X,
+            y: annotation.Y,
+            width: annotation.Width,
+            height: annotation.Height
+          })
+        })
 
-    if (mode === 'text') {
-      setActiveEditor({
-        x: x - 5,
-        y: y - 5,
-        xPoints,
-        yPoints,
-        text: '',
-        formats: [],
-        pageNumber
+        documentViewer.addEventListener('doubleClick', () => {
+          documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.EDIT))
+        })
+
+        annotationManager.addEventListener('textChanged', (annotation, action) => {
+          if (action === 'add') {
+            onCommitText(annotation)
+          }
+        })
+
+        // Load initial document if available
+        if (pdfBytes) {
+          const arr = new Uint8Array(pdfBytes)
+          const blob = new Blob([arr], { type: 'application/pdf' })
+          documentViewer.loadDocument(blob)
+        }
       })
-    } else if (mode === 'select') {
-      // Determine if clicked on existing annotation (approximate box)
-      const clicked = previewAnnotations.find(ann => {
-        if (ann.x === undefined || ann.y === undefined || !ann.text) return false
-        const fontPt = ann.style?.fontSize || textSize
-        const fontPx = (fontPt / 72) * 96 * scale
-        const textWidth = (ann.text.length || 0) * (fontPx * 0.6)
-        const textHeight = fontPx * 1.2
-
-        const annX = pointsToPx(ann.x)
-        const annY = (containerRef.current!.getBoundingClientRect().height) - pointsToPx(ann.y) // flip Y
-
-        return (
-          x >= annX &&
-          x <= annX + textWidth &&
-          y >= annY - textHeight &&
-          y <= annY
-        )
+      .catch((error) => {
+        console.error('WebViewer initialization failed:', error)
       })
 
-      if (clicked) {
-        handleTextEdit(clicked)
-      } else {
-        setActiveEditor(null)
+    // Cleanup
+    return () => {
+      if (viewerInstanceRef.current) {
+        const instance = viewerInstanceRef.current
+        if (instance.Core) {
+          instance.Core.documentViewer.closeDocument()
+        }
+        if (instance.UI) {
+          instance.UI.closeElements(['all'])
+        }
+        viewerInstanceRef.current = null
       }
     }
-  }, [mode, previewAnnotations, scale, handleTextEdit, pageNumber, textSize]) // eslint-disable-line
+  }, []) // Initialize only once
 
-  // Save page size on load (used for positioning)
-  const handlePageLoad = useCallback(({ width, height }: { width: number; height: number }) => {
-    setPageSize({ width, height })
-  }, [])
+  // Handle PDF updates
+  useEffect(() => {
+    if (!viewerInstanceRef.current || !pdfBytes) return
+
+    try {
+      const arr = new Uint8Array(pdfBytes)
+      const blob = new Blob([arr], { type: 'application/pdf' })
+      viewerInstanceRef.current.Core.documentViewer.loadDocument(blob)
+    } catch (error) {
+      console.error('Error loading document:', error)
+    }
+  }, [pdfBytes])
+
+  // Handle mode changes
+  useEffect(() => {
+    if (!viewerInstanceRef.current) return
+    const { documentViewer, Tools } = viewerInstanceRef.current.Core
+    if (mode === 'text') {
+      documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.EDIT))
+    } else {
+      documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.SELECT))
+    }
+  }, [mode])
+
+  // Handle style changes
+  useEffect(() => {
+    if (!viewerInstanceRef.current) return
+    const { annotationManager } = viewerInstanceRef.current.Core
+    const freeTextDefaults = annotationManager.getAnnotationDisplayAuthorAndColor(
+      'FreeText'
+    )
+    freeTextDefaults.textColor = textColor
+    freeTextDefaults.fontSize = `${textSize}px`
+    annotationManager.setAnnotationDisplayAuthorAndColor(
+      'FreeText',
+      freeTextDefaults
+    )
+  }, [textColor, textSize])
+
+  // Handle annotation updates
+  useEffect(() => {
+    if (!viewerInstanceRef.current) return
+    const { annotationManager } = viewerInstanceRef.current.Core
+    annotationManager.importAnnotations(previewAnnotations)
+  }, [previewAnnotations])
 
   return (
-    <div className="w-full h-full overflow-auto">
-      <div className="flex justify-center p-4">
-        <div
-          ref={containerRef}
-          className="relative shadow-md"
-          onClick={handlePageClick}
-        >
-          <Document
-            file={file}
-            onLoadSuccess={(doc) => onDocumentLoad?.(doc.numPages)}
-            onLoadError={(err) => console.error('Failed to load PDF:', err)}
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              onLoadSuccess={handlePageLoad}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            >
-              {/* Render preview annotations positioned over page */}
-              {(containerRef.current ? previewAnnotations : []).map((ann) => {
-                // compute pixel coords from PDF points
-                if (ann.x === undefined || ann.y === undefined) return null
-                const rect = containerRef.current?.getBoundingClientRect()
-                const annX = pointsToPx(ann.x)
-                const annY = (rect ? rect.height : 0) - pointsToPx(ann.y) // flip Y
-                const fontPt = ann.style?.fontSize || textSize
-                const fontPx = (fontPt / 72) * 96 * scale
-
-                return (
-                  <div
-                    key={ann.id}
-                    style={{
-                      position: 'absolute',
-                      left: `${annX}px`,
-                      top: `${annY - (fontPx * 0.2)}px`, // slight vertical adjustment
-                      color: ann.style?.color || textColor,
-                      fontSize: `${fontPx}px`,
-                      whiteSpace: 'nowrap',
-                      cursor: 'text',
-                      userSelect: 'none',
-                      zIndex: 5,
-                      pointerEvents: 'auto'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleInlineEdit(ann)
-                    }}
-                  >
-                    {ann.text}
-                  </div>
-                )
-              })}
-            </Page>
-          </Document>
-
-          {/* Editor overlay (rendered inside same relative container so left/top are correct) */}
-          {activeEditor ? (
-            <TextEditor
-              x={activeEditor.x}
-              y={activeEditor.y}
-              initialText={activeEditor.text}
-              initialFormats={activeEditor.formats || []}
-              onSave={(text, formats) => handleTextCommit(text, formats)}
-              onCancel={() => setActiveEditor(null)}
-              textColor={textColor}
-              textSize={textSize}
-            />
-          ) : null}
-        </div>
-      </div>
+    <div className="h-full w-full">
+      <div
+        className="webviewer h-full w-full"
+        ref={viewerDiv}
+        onTouchStart={(e) => e.preventDefault()}
+        onTouchMove={(e) => e.preventDefault()}
+      />
     </div>
   )
 }
+
+export default PdfViewer

@@ -1,20 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import Toolbar from '../components/Toolbar'
 import PdfViewer from '../components/PdfViewer'
-import PageThumbnails from '../components/PageThumbnails'
 import UploadDropzone from '../components/UploadDropzone'
-import { usePdfState } from '../hooks/usePdfState'
-type AnnotationMode = 'select' | 'text'
-import type { TextAnnotation, TextFormat } from '../types/pdf'
+import { usePdf } from '../context/PdfContext'
 import { downloadBytesAsFile } from '../utils/download'
 
-export default function EditorPage(){
+export default function EditorPage() {
   const location = useLocation() as any
   const {
     pdfBytes,
-    loadedPdfs,
+    loadFromFiles,
+    onDocumentLoad,
     numPages,
     pageNumber,
     setPageNumber,
@@ -22,32 +20,31 @@ export default function EditorPage(){
     zoomIn,
     zoomOut,
     resetZoom,
-    pageOrder,
     updateOrder,
     annotations,
     addText,
-    loadFromFiles,
-    onDocumentLoad,
+    editText, // Added editText
     canExport,
     exportEdited,
     removePdf,
-    clearAllPdfs
-  } = usePdfState()
+    clearAllPdfs,
+    loadedPdfs
+  } = usePdf()
 
-  const [mode, setMode] = useState<AnnotationMode>('select')
+  const [mode, setMode] = useState<'select' | 'text'>('select')
   const [textColor, setTextColor] = useState('#111827')
   const [textSize, setTextSize] = useState(14)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Handle adding new text annotations
-  const handleTextAdd = useCallback((ann: TextAnnotation) => {
+  const handleTextAdd = useCallback((ann: any) => {
     try {
       // Ensure required fields are present
       if (ann.x === undefined || ann.y === undefined || ann.text === undefined) {
         console.warn('Missing required fields in text annotation:', ann)
         return
       }
-      
+
       addText({
         ...ann,
         id: ann.id || `text-${Date.now()}`,
@@ -63,26 +60,47 @@ export default function EditorPage(){
       setError('Failed to add text annotation')
     }
   }, [addText, pageNumber, textColor, textSize])
-  
+
+  // Handle editing text
+  const handleEditText = useCallback(
+    (edit: {
+      oldText: string
+      newText: string
+      pageNumber: number
+      x: number
+      y: number
+      width: number
+      height: number
+    }) => {
+      try {
+        editText(edit)
+      } catch (error) {
+        console.error('Error editing text:', error)
+        setError('Failed to edit text')
+      }
+    },
+    [editText]
+  )
+
   // Update document title based on mode
-  useEffect(() => {
+  React.useEffect(() => {
     document.title = mode === 'text' ? 'PDF Editor - Text Mode' : 'PDF Editor'
   }, [mode])
-  
+
   // Handle keyboard shortcuts
-  useEffect(() => {
+  React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Toggle text mode with Escape key
       if (e.key === 'Escape' && mode === 'text') {
         setMode('select')
       }
     }
-    
+
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [mode])
-  const loadedNavKeyRef = useRef<string | null>(null)
-  useEffect(() => {
+  const loadedNavKeyRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
     const files = (location?.state?.files as File[] | undefined) || undefined
     if (!files || files.length === 0) return
     const key = files.map(f => `${f.name}:${f.size}:${f.lastModified}`).join('|')
@@ -91,15 +109,15 @@ export default function EditorPage(){
     loadFromFiles(files).catch(err => setError(String(err)))
   }, [location?.state?.files, loadFromFiles])
 
-  const previewAnnotations = useMemo(() => annotations, [annotations])
+  const previewAnnotations = React.useMemo(() => annotations, [annotations])
 
-  async function handleExport(){
+  async function handleExport() {
     setError(null)
     try {
       const out = await exportEdited()
       if (!out) throw new Error('Nothing to export')
       downloadBytesAsFile(out, 'edited.pdf')
-    } catch (e:any) {
+    } catch (e: any) {
       setError(e?.message || 'Failed to export PDF')
     }
   }
@@ -118,8 +136,18 @@ export default function EditorPage(){
     }
   }
 
+  const handleFileUpload = useCallback(async (files: File[]) => {
+    setError(null)
+    try {
+      await loadFromFiles(files)
+    } catch (e: any) {
+      console.error('File upload error:', e)
+      setError(e?.message || 'Failed to load PDF file')
+    }
+  }, [loadFromFiles])
+
   return (
-    <div className="min-h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-screen bg-gray-50">
       <Toolbar
         onOpenFiles={handleOpenFiles}
         onZoomIn={zoomIn}
@@ -139,100 +167,39 @@ export default function EditorPage(){
         onClearAll={loadedPdfs.length > 0 ? clearAllPdfs : undefined}
       />
 
-      {/* Display loaded PDFs */}
-      {loadedPdfs.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="flex flex-wrap gap-2 mb-2">
-            {loadedPdfs.map((pdf) => (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <button
-                      className={`px-3 py-1 rounded-md border ${mode === 'select' 
-                        ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700' 
-                        : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                      onClick={() => setMode('select')}
-                    >
-                      Select Mode
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <button
-                      className={`px-3 py-1 rounded-md border ${mode === 'text' 
-                        ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700' 
-                        : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                      onClick={() => setMode('text')}
-                    >
-                      Text Mode
-                    </button>
-                  </div>
-                </div>
-                <div
-                  key={pdf.id}
-                  className="flex items-center bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800"
-                >
-                  <span className="truncate max-w-xs">{pdf.name}</span>
-                  <button
-                    onClick={(e) => handleRemovePdf(pdf.id, e)}
-                    className="ml-2 text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-100"
-                    title="Remove PDF"
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="max-w-7xl mx-auto px-4 pt-4">
-          <div className="rounded-md border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm">{error}</div>
-        </div>
-      )}
-
-      {!pdfBytes || pdfBytes.length === 0 ? (
-        <div className="max-w-3xl mx-auto px-6 py-12">
-          <h2 className="text-2xl font-bold mb-4">Upload PDFs to start editing</h2>
-          <UploadDropzone onFilesSelected={async (fs)=> {
-            setError(null)
-            try {
-              await loadFromFiles(fs)
-            } catch (e:any) {
-              setError(e?.message || 'Failed to load files')
-            }
-          }} />
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[260px,1fr] gap-4 px-4 py-4">
-          {/* Sidebar thumbnails */}
-          <aside className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/50 h-[calc(100vh-14rem)] sticky top-[7.5rem]">
-            <PageThumbnails
-              pdfBytes={pdfBytes}
-              pageOrder={pageOrder}
-              setPageOrder={updateOrder}
-              currentPage={pageNumber}
-              onSelectPage={setPageNumber}
+      <div className="flex-1 relative overflow-hidden">
+        {!pdfBytes || pdfBytes.length === 0 ? (
+          <div className="max-w-3xl mx-auto px-6 py-12">
+            <h2 className="text-2xl font-bold mb-4">Upload a PDF to start editing</h2>
+            <UploadDropzone
+              onFilesSelected={handleFileUpload}
+              accept=".pdf"
+              maxFiles={1}
             />
-          </aside>
-
-          {/* Viewer */}
-          <section className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/50 h-[calc(100vh-14rem)]">
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-white shadow-lg rounded-lg m-4">
             <PdfViewer
               pdfBytes={pdfBytes}
-              pageNumber={pageNumber}
-              scale={scale}
-              onDocumentLoad={onDocumentLoad}
+              onDocumentLoaded={onDocumentLoad}
               mode={mode}
               textColor={textColor}
               textSize={textSize}
               onCommitText={handleTextAdd}
+              onEditText={handleEditText} // Added onEditText
               previewAnnotations={previewAnnotations}
             />
-          </section>
-        </div>
-      )}
+          </div>
+        )}
+
+        {error && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+            <div className="rounded-md border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm shadow-lg">
+              {error}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

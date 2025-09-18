@@ -1,69 +1,42 @@
-import { useCallback, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
 
-type Props = {
-  onFilesSelected?: (files: File[]) => void
-  accept?: string
-  multiple?: boolean
-  redirectToEditor?: boolean
+interface Props {
+  onFilesSelected: (files: File[]) => void
 }
 
-export default function UploadDropzone({ onFilesSelected, accept = 'application/pdf', multiple = true, redirectToEditor }: Props) {
-  const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
+const UploadDropzone = ({ onFilesSelected }: Props) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      onFilesSelected(acceptedFiles)
+    }
+  }, [onFilesSelected])
 
-  const handleFiles = useCallback((files: FileList | null) => {
-    setError(null)
-    if (!files || files.length === 0) return
-    const valid: File[] = []
-    for (const file of Array.from(files)) {
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        valid.push(file)
-      }
-    }
-    if (valid.length === 0) {
-      setError('Please upload PDF files (.pdf)')
-      return
-    }
-    onFilesSelected?.(valid)
-    if (redirectToEditor) navigate('/editor', { state: { files: valid } })
-  }, [onFilesSelected, navigate, redirectToEditor])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+    },
+    multiple: true,
+  })
 
   return (
-    <div>
-      <div
-        onDragOver={(e)=>{ e.preventDefault(); setIsDragging(true) }}
-        onDragLeave={()=> setIsDragging(false)}
-        onDrop={(e)=>{ e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files) }}
-        className={
-          'relative rounded-xl border-2 border-dashed p-8 text-center transition ' +
-          (isDragging ? 'border-primary-500 bg-primary-50/60 dark:bg-slate-800' : 'border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800')
-        }
-        role="button"
-        aria-label="Upload PDF files"
-      >
-        <div className="space-y-2">
-          <p className="text-lg font-semibold">Drag & drop PDFs here</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400">or</p>
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white hover:bg-primary-700"
-          >
-            Browse files
-          </button>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            multiple={multiple}
-            hidden
-            onChange={(e)=> handleFiles(e.target.files)}
-          />
+    <div
+      {...getRootProps()}
+      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+        }`}
+    >
+      <input {...getInputProps()} />
+      {isDragActive ? (
+        <p className="text-blue-600">Drop the PDF files here...</p>
+      ) : (
+        <div>
+          <p className="text-gray-600">Drag and drop PDF files here, or click to select files</p>
+          <p className="text-sm text-gray-500 mt-2">Only PDF files are accepted</p>
         </div>
-      </div>
-      {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
+      )}
     </div>
   )
 }
+
+export default UploadDropzone

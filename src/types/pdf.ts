@@ -17,3 +17,13 @@ export type TextAnnotation = {
   pageNumber?: number
   type?: 'text' | 'image' | 'signature'
 }
+
+export type EditedText = {
+  oldText: string
+  newText: string
+  pageNumber: number
+  x: number
+  y: number
+  width: number
+  height: number
+}
