@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { PDFDocument } from 'pdf-lib'
-import { fileToBytes, mergePdfs, reorderPages, addTextAnnotations, editTextInPdf } from '../services/pdfService'
+import { fileToBytes, mergePdfs, reorderPages, addTextAnnotations, editExistingTextInPdf } from '../services/pdfService'
 import type { TextAnnotation, EditedText } from '../types/pdf'
 
 interface LoadedPdf {
@@ -80,12 +80,65 @@ export function usePdfState() {
   }, [])
 
   const editText = useCallback(async (edit: EditedText) => {
-    if (!mergedPdf) return
+    if (!mergedPdf) {
+      console.warn('No PDF loaded for editing');
+      return;
+    }
+
     try {
-      const updatedPdfBytes = await editTextInPdf(mergedPdf, edit)
-      setMergedPdf(updatedPdfBytes)
+      console.log('Starting text edit operation:', edit);
+
+      // Validate input
+      if (!edit.oldText || !edit.newText) {
+        console.error('Invalid text edit parameters:', edit);
+        throw new Error('Invalid text edit parameters');
+      }
+
+      console.log('Calling editExistingTextInPdf with:', {
+        pageNumber: edit.pageNumber,
+        oldText: edit.oldText,
+        newText: edit.newText,
+        x: edit.x,
+        y: edit.y
+      });
+
+      const updatedPdfBytes = await editExistingTextInPdf(
+        mergedPdf,
+        edit.pageNumber,
+        edit.oldText,
+        edit.newText,
+        edit.x,
+        edit.y
+      );
+
+      // Verify the edit produced changes
+      if (updatedPdfBytes.length === mergedPdf.length) {
+        console.warn('Text edit did not produce byte-level changes');
+      }
+
+      console.log('PDF update successful, updating state');
+      setMergedPdf(updatedPdfBytes);
+
+      // Update annotations
+      setAnnotations(prev => {
+        const updated = prev.map(ann => {
+          if (ann.pageNumber === edit.pageNumber &&
+            ann.x !== undefined && ann.y !== undefined &&
+            Math.abs(ann.x - edit.x) < 10 &&
+            Math.abs(ann.y - edit.y) < 10 &&
+            ann.text === edit.oldText) {
+            console.log('Updating annotation:', { old: ann, new: edit.newText });
+            return { ...ann, text: edit.newText };
+          }
+          return ann;
+        });
+        return updated;
+      });
+
+      console.log('Text edit operation completed successfully');
     } catch (error) {
-      console.error('Error editing text:', error)
+      console.error('Text edit operation failed:', error);
+      throw new Error(`Failed to edit text: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [mergedPdf])
 
@@ -93,7 +146,7 @@ export function usePdfState() {
     setPageOrder(newOrder)
   }, [])
 
-  const canExport = useMemo(() => mergedPdf && numPages > 0, [mergedPdf, numPages])
+  const canExport = useMemo(() => Boolean(mergedPdf && numPages > 0), [mergedPdf, numPages])
 
   const exportEdited = useCallback(async () => {
     if (!mergedPdf) return null

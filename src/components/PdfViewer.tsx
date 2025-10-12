@@ -1,181 +1,211 @@
-import React, { useEffect, useRef } from 'react'
-import WebViewer from '@pdftron/webviewer'
-import { usePdfState } from '../hooks/usePdfState'
+import React, { useEffect, useRef, useState } from 'react';
+import WebViewer from '@pdftron/webviewer';
+import { usePdfState } from '../hooks/usePdfState';
 
 interface PdfViewerProps {
-  pdfBytes: Uint8Array | null
-  onDocumentLoaded?: (pageCount: number) => void
-  mode: 'select' | 'text'
-  onCommitText: (annotation: any) => void
-  onEditText: (edit: {
-    oldText: string
-    newText: string
-    pageNumber: number
-    x: number
-    y: number
-    width: number
-    height: number
-  }) => void
-  textColor: string
-  textSize: number
-  previewAnnotations: any[]
+  pdfBytes: Uint8Array | null;
+  onDocumentLoaded?: (pageCount: number) => void;
+  mode: 'select' | 'text';
+  textColor: string;
+  textSize: number;
+  previewAnnotations: any[];
+  handleTextEdit?: (edit: {
+    oldText: string;
+    newText: string;
+    pageNumber: number;
+  }) => void;
 }
 
 const PdfViewer = ({
   pdfBytes,
   onDocumentLoaded,
   mode,
-  onCommitText,
-  onEditText,
   textColor,
   textSize,
-  previewAnnotations
+  previewAnnotations,
+  handleTextEdit,
 }: PdfViewerProps) => {
-  const viewerDiv = useRef<HTMLDivElement>(null)
-  const viewerInstanceRef = useRef<any>(null)
-  const { setNumPages } = usePdfState()
+  const viewerDiv = useRef<HTMLDivElement>(null);
+  const instanceRef = useRef<any>(null);
+  const { onDocumentLoad } = usePdfState();
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!viewerDiv.current || viewerInstanceRef.current) return
+    const element = viewerDiv.current;
+    if (!element) {
+      return;
+    }
 
-    const element = viewerDiv.current
+    if (instanceRef.current) {
+      return;
+    }
 
     WebViewer(
       {
         path: '/lib/webviewer',
         licenseKey:
           import.meta.env.VITE_PDFTRON_LICENSE_KEY ||
-          'demo:1757879970041:6045741f0300000000c1c10a42adeff7132c88744a5bed804c8c678ad5',
+          (import.meta.env.DEV
+            ? 'demo:1757879970041:6045741f0300000000c1c10a42adeff7132c88744a5bed804c8c678ad5'
+            : ''),
         fullAPI: true,
         enableFilePicker: false,
-        enableTextEditing: true,
         enableRedaction: true,
-        showToolbarControl: true
+        enableMeasurement: false,
+        enableAnnotations: true,
       },
       element
     )
-      .then(async (instance) => {
-        viewerInstanceRef.current = instance
+      .then((instance) => {
+        instanceRef.current = instance;
+        const { Core } = instance;
+        const { documentViewer, annotationManager } = Core;
 
-        const { Core, UI } = instance
-        const { documentViewer, annotationManager, Tools } = Core
-
-        // Enable text editing features
-        UI.enableFeatures([UI.Feature.TextSelection])
-        UI.setToolMode('TextSelect')
-
-        // Add event listeners
-        documentViewer.addEventListener('documentLoaded', () => {
-          const pageCount = documentViewer.getPageCount()
-          setNumPages(pageCount)
-          onDocumentLoaded?.(pageCount)
-        })
-
-        documentViewer.addEventListener('textEditorChanged', (oldText, newText, annotation) => {
-          if (!annotation) return
-          onEditText({
-            oldText,
-            newText,
-            pageNumber: annotation.PageNumber,
-            x: annotation.X,
-            y: annotation.Y,
-            width: annotation.Width,
-            height: annotation.Height
-          })
-        })
-
-        documentViewer.addEventListener('doubleClick', () => {
-          documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.EDIT))
-        })
-
-        annotationManager.addEventListener('textChanged', (annotation, action) => {
-          if (action === 'add') {
-            onCommitText(annotation)
+        // When the user edits text, it creates a 'FreeText' annotation.
+        // We can listen for that change to get the new text.
+        annotationManager.addEventListener('annotationChanged', (annotations, action, { imported }) => {
+          // Don't run this on the initial import of annotations
+          if (imported) {
+            return;
           }
-        })
 
-        // Load initial document if available
+          if (action === 'modify') {
+            annotations.forEach(annot => {
+              if (annot instanceof Core.Annotations.FreeTextAnnotation) {
+                // You can access the new text with annot.getContents()
+                // and handle it here if needed.
+                console.log('Text edited:', annot.getContents());
+              }
+            });
+          }
+        });
+
+        documentViewer.addEventListener('documentLoaded', () => {
+          try {
+            const pageCount = documentViewer.getPageCount();
+            onDocumentLoad(pageCount);
+            onDocumentLoaded?.(pageCount);
+          } catch (error) {
+            console.error('Error in documentLoaded handler:', error);
+          }
+        });
+
         if (pdfBytes) {
-          const arr = new Uint8Array(pdfBytes)
-          const blob = new Blob([arr], { type: 'application/pdf' })
-          documentViewer.loadDocument(blob)
+          try {
+            const arr = new Uint8Array(pdfBytes);
+            const blob = new Blob([arr], { type: 'application/pdf' });
+            documentViewer.loadDocument(blob);
+          } catch (error) {
+            console.error('Error loading document:', error);
+          }
         }
       })
       .catch((error) => {
-        console.error('WebViewer initialization failed:', error)
-      })
+        console.error('WebViewer initialization failed:', error);
+        setInitError(error.message || 'Failed to initialize WebViewer');
+      });
 
-    // Cleanup
     return () => {
-      if (viewerInstanceRef.current) {
-        const instance = viewerInstanceRef.current
-        if (instance.Core) {
-          instance.Core.documentViewer.closeDocument()
+      if (instanceRef.current) {
+        try {
+          instanceRef.current.dispose();
+          instanceRef.current = null;
+        } catch (error) {
+          console.error('Error during cleanup:', error);
         }
-        if (instance.UI) {
-          instance.UI.closeElements(['all'])
-        }
-        viewerInstanceRef.current = null
       }
-    }
-  }, []) // Initialize only once
+    };
+  }, []);
 
-  // Handle PDF updates
+  // Effect to load a new document when the pdfBytes prop changes
   useEffect(() => {
-    if (!viewerInstanceRef.current || !pdfBytes) return
+    const instance = instanceRef.current;
+    if (!instance || !pdfBytes) return;
+    try {
+      const arr = new Uint8Array(pdfBytes);
+      const blob = new Blob([arr], { type: 'application/pdf' });
+      instance.Core.documentViewer.loadDocument(blob);
+    } catch (error) {
+      console.error('Error reloading document:', error);
+    }
+  }, [pdfBytes]);
+
+  // Effect to switch between editing and selection mode
+  useEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance) return;
 
     try {
-      const arr = new Uint8Array(pdfBytes)
-      const blob = new Blob([arr], { type: 'application/pdf' })
-      viewerInstanceRef.current.Core.documentViewer.loadDocument(blob)
+      const { UI } = instance;
+      const { documentViewer, annotationManager } = instance.Core;
+
+      if (mode === 'text') {
+        // Enter text editing mode
+        annotationManager.disableReadOnlyMode();
+        documentViewer.setToolMode(documentViewer.getTool('AnnotationEdit'));
+        UI.setToolMode('AnnotationEdit');
+      } else {
+        // Enter selection/pan mode
+        annotationManager.enableReadOnlyMode();
+        documentViewer.setToolMode(documentViewer.getTool('Pan'));
+        UI.setToolMode('Pan');
+      }
     } catch (error) {
-      console.error('Error loading document:', error)
+      console.error('Error handling mode change:', error);
     }
-  }, [pdfBytes])
+  }, [mode]);
 
-  // Handle mode changes
+  // Effect to update text style (color and size)
   useEffect(() => {
-    if (!viewerInstanceRef.current) return
-    const { documentViewer, Tools } = viewerInstanceRef.current.Core
-    if (mode === 'text') {
-      documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.EDIT))
-    } else {
-      documentViewer.setToolMode(documentViewer.getTool(Tools.ToolNames.SELECT))
+    const instance = instanceRef.current;
+    if (!instance) return;
+    try {
+      const { annotationManager } = instance.Core;
+      const freeTextDefaults = annotationManager.getAnnotationDisplayAuthorAndColor('FreeText');
+      freeTextDefaults.textColor = new instance.Core.Annotations.Color(textColor);
+      freeTextDefaults.fontSize = `${textSize}px`;
+      annotationManager.setAnnotationDisplayAuthorAndColor('FreeText', freeTextDefaults);
+    } catch (error) {
+      console.error('Error updating annotation styles:', error);
     }
-  }, [mode])
+  }, [textColor, textSize]);
 
-  // Handle style changes
+  // Effect to load annotations
   useEffect(() => {
-    if (!viewerInstanceRef.current) return
-    const { annotationManager } = viewerInstanceRef.current.Core
-    const freeTextDefaults = annotationManager.getAnnotationDisplayAuthorAndColor(
-      'FreeText'
-    )
-    freeTextDefaults.textColor = textColor
-    freeTextDefaults.fontSize = `${textSize}px`
-    annotationManager.setAnnotationDisplayAuthorAndColor(
-      'FreeText',
-      freeTextDefaults
-    )
-  }, [textColor, textSize])
-
-  // Handle annotation updates
-  useEffect(() => {
-    if (!viewerInstanceRef.current) return
-    const { annotationManager } = viewerInstanceRef.current.Core
-    annotationManager.importAnnotations(previewAnnotations)
-  }, [previewAnnotations])
+    const instance = instanceRef.current;
+    if (!instance) return;
+    try {
+      const { annotationManager } = instance.Core;
+      annotationManager.importAnnotations(previewAnnotations);
+    } catch (error) {
+      console.error('Error importing annotations:', error);
+    }
+  }, [previewAnnotations]);
 
   return (
     <div className="h-full w-full">
-      <div
-        className="webviewer h-full w-full"
-        ref={viewerDiv}
-        onTouchStart={(e) => e.preventDefault()}
-        onTouchMove={(e) => e.preventDefault()}
-      />
+      {initError ? (
+        <div className="h-full w-full flex items-center justify-center bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-center p-6">
+            <h3 className="text-lg font-semibold text-red-800 mb-2">WebViewer Initialization Failed</h3>
+            <p className="text-red-600 mb-4">{initError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          key="webviewer-container"
+          className="webviewer h-full w-full"
+          ref={viewerDiv}
+        />
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default PdfViewer
+export default PdfViewer;

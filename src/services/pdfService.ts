@@ -102,21 +102,111 @@ export async function editTextInPdf(pdfBytes: Uint8Array, edit: EditedText): Pro
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
   const page = doc.getPage(edit.pageNumber - 1)
 
-  // Cover the old text with a white rectangle
+  // Get page dimensions
+  const { width, height } = page.getSize()
+
+  // Load a font
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+
+  // Calculate approximate text dimensions for better positioning
+  const fontSize = Math.min(edit.height * 0.8, 24) // Reasonable font size
+  const textWidth = helvetica.widthOfTextAtSize(edit.newText, fontSize)
+
+  // Ensure text doesn't overflow page boundaries
+  const adjustedX = Math.max(0, Math.min(edit.x, width - textWidth))
+  const adjustedY = Math.max(0, Math.min(edit.y, height - fontSize))
+
+  // Cover the old text area with a white rectangle (slightly larger for better coverage)
+  const eraseWidth = Math.max(edit.width, textWidth + 10)
+  const eraseHeight = Math.max(edit.height, fontSize + 5)
+
   page.drawRectangle({
-    x: edit.x,
-    y: edit.y,
-    width: edit.width,
-    height: edit.height,
+    x: adjustedX - 5,
+    y: adjustedY - 2,
+    width: eraseWidth,
+    height: eraseHeight,
     color: rgb(1, 1, 1),
+    opacity: 1,
   })
 
-  // Draw the new text
-  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  // Draw the new text with better positioning and sizing
   page.drawText(edit.newText, {
-    x: edit.x,
-    y: edit.y,
-    size: edit.height, // Approximate font size
+    x: adjustedX,
+    y: adjustedY,
+    size: fontSize,
+    font: helvetica,
+    color: rgb(0, 0, 0),
+  })
+
+  return await doc.save()
+}
+
+export async function editExistingTextInPdf(
+  pdfBytes: Uint8Array,
+  pageNumber: number,
+  originalText: string,
+  newText: string,
+  x: number,
+  y: number
+): Promise<Uint8Array> {
+  // This is a more sophisticated approach that tries to find and replace text
+  // Note: PDF text replacement is complex due to the nature of PDF text objects
+  // For now, we'll use the overlay approach but with better precision
+
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const page = doc.getPage(pageNumber - 1)
+
+  // Get page dimensions
+  const { width, height } = page.getSize()
+
+  // Load font
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+
+  // Estimate text dimensions for better overlay
+  const estimatedFontSize = 12 // Default assumption
+  const estimatedWidth = helvetica.widthOfTextAtSize(originalText, estimatedFontSize)
+  const estimatedHeight = estimatedFontSize * 1.2
+
+  // Create a more precise overlay rectangle
+  const overlayX = x - 2
+  const overlayY = y - 2
+  const overlayWidth = Math.max(estimatedWidth + 4, 50) // Minimum width
+  const overlayHeight = estimatedHeight + 4
+
+  // Ensure overlay doesn't go outside page bounds
+  const safeX = Math.max(0, Math.min(overlayX, width - overlayWidth))
+  const safeY = Math.max(0, Math.min(overlayY, height - overlayHeight))
+
+  // Draw white overlay to erase original text
+  page.drawRectangle({
+    x: safeX,
+    y: safeY,
+    width: overlayWidth,
+    height: overlayHeight,
+    color: rgb(1, 1, 1),
+    opacity: 1,
+  })
+
+  // Calculate proper font size based on available space
+  const maxFontSize = Math.min(overlayHeight - 4, 24)
+  const calculatedFontSize = Math.min(maxFontSize, 12) // Start with reasonable size
+  const newTextWidth = helvetica.widthOfTextAtSize(newText, calculatedFontSize)
+
+  // Adjust font size if text is too wide
+  let finalFontSize = calculatedFontSize
+  if (newTextWidth > overlayWidth - 4) {
+    finalFontSize = Math.max(6, (overlayWidth - 4) * calculatedFontSize / newTextWidth)
+  }
+
+  // Position text within the overlay area
+  const textX = safeX + 2
+  const textY = safeY + 2
+
+  // Draw the new text
+  page.drawText(newText, {
+    x: textX,
+    y: textY,
+    size: finalFontSize,
     font: helvetica,
     color: rgb(0, 0, 0),
   })

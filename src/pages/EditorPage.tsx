@@ -6,6 +6,8 @@ import PdfViewer from '../components/PdfViewer'
 import UploadDropzone from '../components/UploadDropzone'
 import { usePdf } from '../context/PdfContext'
 import { downloadBytesAsFile } from '../utils/download'
+import ErrorBoundary from '../components/ErrorBoundary'
+import TextEditingInstructions from '../components/TextEditingInstructions'
 
 export default function EditorPage() {
   const location = useLocation() as any
@@ -73,10 +75,18 @@ export default function EditorPage() {
       height: number
     }) => {
       try {
-        editText(edit)
+        console.log('Text edit request:', edit);
+        if (edit.oldText === edit.newText) {
+          console.log('No text changes detected');
+          return;
+        }
+        editText(edit).catch((error) => {
+          console.error('Text edit failed:', error);
+          setError('Failed to edit text: ' + error.message);
+        });
       } catch (error) {
-        console.error('Error editing text:', error)
-        setError('Failed to edit text')
+        console.error('Error in handleEditText:', error);
+        setError('Failed to process text edit');
       }
     },
     [editText]
@@ -173,24 +183,25 @@ export default function EditorPage() {
             <h2 className="text-2xl font-bold mb-4">Upload a PDF to start editing</h2>
             <UploadDropzone
               onFilesSelected={handleFileUpload}
-              accept=".pdf"
-              maxFiles={1}
             />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-white shadow-lg rounded-lg m-4">
-            <PdfViewer
-              pdfBytes={pdfBytes}
-              onDocumentLoaded={onDocumentLoad}
-              mode={mode}
-              textColor={textColor}
-              textSize={textSize}
-              onCommitText={handleTextAdd}
-              onEditText={handleEditText} // Added onEditText
-              previewAnnotations={previewAnnotations}
-            />
-          </div>
+          <ErrorBoundary>
+            <div className="absolute inset-0 bg-white shadow-lg rounded-lg m-4">
+              <PdfViewer
+                pdfBytes={pdfBytes}
+                onDocumentLoaded={onDocumentLoad}
+                mode={mode}
+                textColor={textColor}
+                textSize={textSize}
+                previewAnnotations={previewAnnotations}
+                handleTextEdit={handleEditText}
+              />
+            </div>
+          </ErrorBoundary>
         )}
+
+        <TextEditingInstructions mode={mode} onTestTextEdit={() => setError('Click "Test Text Edit" to verify text editing is working. Double-click on any text in the PDF to edit it.')} />
 
         {error && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
