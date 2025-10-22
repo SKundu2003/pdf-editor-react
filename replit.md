@@ -70,6 +70,13 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-22: Enhanced text editing functionality
+  - Enabled PDFTron ContentEdit Manager for direct text editing
+  - Added double-click to start editing text at cursor position
+  - Users can now backspace to delete characters and type new text (like notepad)
+  - Set up text color and size properties for content editing
+  - Fixed text mode to allow character-level editing instead of just annotations
+  
 - 2025-10-22: Initial Replit setup
   - Configured Vite server for port 5000 with host 0.0.0.0
   - Installed all npm dependencies

@@ -70,7 +70,7 @@ const PdfViewer = ({
           }
 
           if (action === 'modify') {
-            annotations.forEach(annot => {
+            annotations.forEach((annot: any) => {
               if (annot instanceof Core.Annotations.FreeTextAnnotation) {
                 // You can access the new text with annot.getContents()
                 // and handle it here if needed.
@@ -136,15 +136,55 @@ const PdfViewer = ({
     if (!instance) return;
 
     try {
-      const { UI } = instance;
-      const { documentViewer, annotationManager } = instance.Core;
+      const { UI, Core } = instance;
+      const { documentViewer, annotationManager, ContentEdit } = Core;
 
       if (mode === 'text') {
-        // Enter text editing mode
+        // Enable content edit mode for direct text editing
+        const contentEditManager = documentViewer.getContentEditManager();
+        
+        // Enable content editing
+        contentEditManager.startContentEditMode();
+        
+        // Disable read-only mode to allow editing
         annotationManager.disableReadOnlyMode();
-        documentViewer.setToolMode(documentViewer.getTool('AnnotationEdit'));
-        UI.setToolMode('AnnotationEdit');
+        
+        // Set tool to text select so users can select text
+        UI.setToolMode('TextSelect');
+        
+        // Add double-click listener for starting text edit
+        const handleDoubleClick = (e: MouseEvent) => {
+          const windowCoordinates = {
+            x: e.clientX,
+            y: e.clientY,
+          };
+
+          const displayMode = documentViewer.getDisplayModeManager().getDisplayMode();
+          const page = displayMode.getSelectedPages(windowCoordinates, windowCoordinates);
+
+          if (page.first !== null) {
+            const pageNumber = page.first;
+            const pageCoordinates = displayMode.windowToPage(windowCoordinates, pageNumber);
+            
+            // Start content editing at the clicked location
+            contentEditManager.startContentEdit(pageCoordinates, pageNumber);
+          }
+        };
+
+        // Store the handler so we can remove it later
+        (instance as any).contentEditHandler = handleDoubleClick;
+        document.addEventListener('dblclick', handleDoubleClick);
       } else {
+        // Exit content edit mode
+        const contentEditManager = documentViewer.getContentEditManager();
+        contentEditManager.endContentEditMode();
+        
+        // Remove double-click listener if it exists
+        if ((instance as any).contentEditHandler) {
+          document.removeEventListener('dblclick', (instance as any).contentEditHandler);
+          delete (instance as any).contentEditHandler;
+        }
+        
         // Enter selection/pan mode
         annotationManager.enableReadOnlyMode();
         documentViewer.setToolMode(documentViewer.getTool('Pan'));
@@ -160,15 +200,40 @@ const PdfViewer = ({
     const instance = instanceRef.current;
     if (!instance) return;
     try {
+      const { documentViewer } = instance.Core;
+      const contentEditManager = documentViewer.getContentEditManager();
+      
+      // Set the text color and size for content editing
+      if (mode === 'text') {
+        // Parse hex color to RGB
+        const hexToRgb = (hex: string) => {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+          } : { r: 0, g: 0, b: 0 };
+        };
+        
+        const rgb = hexToRgb(textColor);
+        
+        // Set default properties for content editing
+        contentEditManager.setDefaultTextProperties({
+          color: new instance.Core.Annotations.Color(rgb.r, rgb.g, rgb.b),
+          fontSize: textSize
+        });
+      }
+      
+      // Also set for FreeText annotations as fallback
       const { annotationManager } = instance.Core;
       const freeTextDefaults = annotationManager.getAnnotationDisplayAuthorAndColor('FreeText');
       freeTextDefaults.textColor = new instance.Core.Annotations.Color(textColor);
       freeTextDefaults.fontSize = `${textSize}px`;
       annotationManager.setAnnotationDisplayAuthorAndColor('FreeText', freeTextDefaults);
     } catch (error) {
-      console.error('Error updating annotation styles:', error);
+      console.error('Error updating text styles:', error);
     }
-  }, [textColor, textSize]);
+  }, [textColor, textSize, mode]);
 
   // Effect to load annotations
   useEffect(() => {
