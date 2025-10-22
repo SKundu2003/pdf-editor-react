@@ -12,9 +12,9 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    host: true,         // 👈 this tells Vite to listen on all hosts
-    allowedHosts: true  // 👈 disables the host check entirely
+    port: 5000,
+    host: '0.0.0.0',    // 👈 this tells Vite to listen on all hosts
+    strictPort: true    // 👈 fail if port 5000 is not available
   }
 
 })
