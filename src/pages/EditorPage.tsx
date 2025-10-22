@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, Bars3Icon } from '@heroicons/react/24/outline'
 import Toolbar from '../components/Toolbar'
 import PdfViewer from '../components/PdfViewer'
 import UploadDropzone from '../components/UploadDropzone'
+import PageThumbnails from '../components/PageThumbnails'
 import { usePdf } from '../context/PdfContext'
 import { downloadBytesAsFile } from '../utils/download'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -21,10 +22,11 @@ export default function EditorPage() {
     zoomIn,
     zoomOut,
     resetZoom,
+    pageOrder,
     updateOrder,
     annotations,
     addText,
-    editText, // Added editText
+    editText,
     canExport,
     exportEdited,
     removePdf,
@@ -36,6 +38,7 @@ export default function EditorPage() {
   const [textColor, setTextColor] = useState('#111827')
   const [textSize, setTextSize] = useState(14)
   const [error, setError] = useState<string | null>(null)
+  const [showThumbnails, setShowThumbnails] = useState(true)
 
   // Handle adding new text annotations
   const handleTextAdd = useCallback((ann: any) => {
@@ -62,33 +65,16 @@ export default function EditorPage() {
     }
   }, [addText, pageNumber, textColor, textSize])
 
-  // Handle editing text
+  // Handle editing text - PDFTron content editing handles this internally
   const handleEditText = useCallback(
     (edit: {
       oldText: string
       newText: string
       pageNumber: number
-      x: number
-      y: number
-      width: number
-      height: number
     }) => {
-      try {
-        console.log('Text edit request:', edit);
-        if (edit.oldText === edit.newText) {
-          console.log('No text changes detected');
-          return;
-        }
-        editText(edit).catch((error) => {
-          console.error('Text edit failed:', error);
-          setError('Failed to edit text: ' + error.message);
-        });
-      } catch (error) {
-        console.error('Error in handleEditText:', error);
-        setError('Failed to process text edit');
-      }
+      console.log('Text edit detected:', edit);
     },
-    [editText]
+    []
   )
 
   // Update document title based on mode
@@ -185,24 +171,64 @@ export default function EditorPage() {
             />
           </div>
         ) : (
-          <ErrorBoundary>
-            <div className="absolute inset-0 bg-white shadow-lg rounded-lg m-4">
-              <PdfViewer
-                pdfBytes={pdfBytes}
-                onDocumentLoaded={onDocumentLoad}
-                mode={mode}
-                textColor={textColor}
-                textSize={textSize}
-                previewAnnotations={previewAnnotations}
-                handleTextEdit={handleEditText}
-              />
+          <div className="flex h-full">
+            {/* Thumbnails Sidebar */}
+            {showThumbnails && pdfBytes && pageOrder.length > 0 && (
+              <div className="w-56 border-r border-gray-200 bg-gray-50 flex flex-col">
+                <div className="p-2 border-b border-gray-200 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Pages</span>
+                  <button
+                    onClick={() => setShowThumbnails(false)}
+                    className="p-1 hover:bg-gray-200 rounded"
+                    title="Hide thumbnails"
+                  >
+                    <XMarkIcon className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-auto">
+                  <PageThumbnails
+                    pdfBytes={pdfBytes}
+                    pageOrder={pageOrder}
+                    setPageOrder={updateOrder}
+                    currentPage={pageNumber}
+                    onSelectPage={setPageNumber}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Main PDF Viewer */}
+            <div className="flex-1 relative">
+              {/* Toggle Thumbnails Button */}
+              {!showThumbnails && (
+                <button
+                  onClick={() => setShowThumbnails(true)}
+                  className="absolute top-4 left-4 z-20 p-2 bg-white border border-gray-300 rounded-lg shadow-md hover:bg-gray-50"
+                  title="Show thumbnails"
+                >
+                  <Bars3Icon className="w-5 h-5 text-gray-700" />
+                </button>
+              )}
+
+              <ErrorBoundary>
+                <div className="absolute inset-0 bg-white shadow-lg rounded-lg m-4">
+                  <PdfViewer
+                    pdfBytes={pdfBytes}
+                    onDocumentLoaded={onDocumentLoad}
+                    mode={mode}
+                    textColor={textColor}
+                    textSize={textSize}
+                    previewAnnotations={previewAnnotations}
+                    handleTextEdit={handleEditText}
+                  />
+                </div>
+              </ErrorBoundary>
             </div>
-          </ErrorBoundary>
+          </div>
         )}
 
-
         {error && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
             <div className="rounded-md border border-red-300 bg-red-50 text-red-700 px-4 py-3 text-sm shadow-lg">
               {error}
             </div>

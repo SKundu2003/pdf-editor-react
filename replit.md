@@ -55,14 +55,15 @@ npm run build
 ```
 
 ## Features
-- Direct text editing in PDFs (double-click to edit)
-- Real-time text modification with live preview
-- Text formatting (size, color)
-- Mode switching (select/edit)
-- PDF export with preserved changes
-- Drag-and-drop file upload
-- Page thumbnails navigation
-- Responsive design
+- **Direct Text Editing**: Double-click on any text in PDFs to edit like notepad
+- **Real-time Preview**: See text modifications instantly
+- **Text Formatting**: Change text size and color
+- **Page Rearrangement**: Drag-and-drop page thumbnails to reorder pages
+- **Thumbnails Sidebar**: Collapsible sidebar with page previews and navigation
+- **Mode Switching**: Toggle between select and text editing modes
+- **PDF Export**: Export edited PDFs with all changes preserved
+- **Drag-and-Drop Upload**: Easy file upload interface
+- **Responsive Design**: Clean, modern interface
 
 ## Environment Notes
 - Configured for Replit deployment
@@ -70,6 +71,13 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-22: Added page rearrangement feature
+  - Implemented collapsible thumbnails sidebar with drag-and-drop page reordering
+  - Added toggle button to show/hide page thumbnails
+  - Integrated @dnd-kit for smooth drag-and-drop experience
+  - Pages can be clicked to navigate, dragged to reorder
+  - Removed instructions overlay and footer for cleaner UI
+  
 - 2025-10-22: Enhanced text editing functionality
   - Enabled PDFTron ContentEdit Manager for direct text editing
   - Added double-click to start editing text at cursor position
