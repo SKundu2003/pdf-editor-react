@@ -7,7 +7,6 @@ import UploadDropzone from '../components/UploadDropzone'
 import { usePdf } from '../context/PdfContext'
 import { downloadBytesAsFile } from '../utils/download'
 import ErrorBoundary from '../components/ErrorBoundary'
-import TextEditingInstructions from '../components/TextEditingInstructions'
 
 export default function EditorPage() {
   const location = useLocation() as any
@@ -201,7 +200,6 @@ export default function EditorPage() {
           </ErrorBoundary>
         )}
 
-        <TextEditingInstructions mode={mode} onTestTextEdit={() => setError('Click "Test Text Edit" to verify text editing is working. Double-click on any text in the PDF to edit it.')} />
 
         {error && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
