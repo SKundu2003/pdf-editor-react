@@ -13,8 +13,8 @@ export default defineConfig({
   },
   server: {
     port: 5000,
-    host: '0.0.0.0',    // 👈 this tells Vite to listen on all hosts
-    strictPort: true    // 👈 fail if port 5000 is not available
+    host: '0.0.0.0',
+    allowedHosts: true  // 👈 required for Replit proxy
   }
 
 })
