@@ -23,16 +23,16 @@ const UploadDropzone = ({ onFilesSelected }: Props) => {
   return (
     <div
       {...getRootProps()}
-      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-300 dark:border-slate-700 hover:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/10'
         }`}
     >
       <input {...getInputProps()} />
       {isDragActive ? (
-        <p className="text-blue-600">Drop the PDF files here...</p>
+        <p className="text-primary-600 dark:text-primary-400 font-medium">Drop the PDF files here...</p>
       ) : (
         <div>
-          <p className="text-gray-600">Drag and drop PDF files here, or click to select files</p>
-          <p className="text-sm text-gray-500 mt-2">Only PDF files are accepted</p>
+          <p className="text-slate-600 dark:text-slate-300 font-medium">Drag and drop PDF files here, or click to select files</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Only PDF files are accepted</p>
         </div>
       )}
     </div>

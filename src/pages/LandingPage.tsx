@@ -33,8 +33,8 @@ export default function LandingPage() {
               A modern, privacy-friendly PDF tool to upload, view, annotate, rearrange pages, and export — no server required.
             </motion.p>
             <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:0.2,duration:0.6}} className="mt-8 flex flex-wrap gap-3">
-              <Link to="/editor" className="px-5 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition">Get Started</Link>
-              <a href="#upload" className="px-5 py-3 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Upload PDF</a>
+              <Link to="/editor" className="px-5 py-3 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition shadow-lg shadow-primary-200">Get Started</Link>
+              <a href="#upload" className="px-5 py-3 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition shadow-md">Upload PDF</a>
             </motion.div>
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
               <Feature title="Privacy-first" text="All editing happens locally in your browser." />
@@ -42,14 +42,14 @@ export default function LandingPage() {
               <Feature title="Free & simple" text="No account. No watermark. Just works." />
             </div>
           </div>
-          <motion.div initial={{opacity:0,scale:0.98}} animate={{opacity:1,scale:1}} transition={{delay:0.1,duration:0.6}} className="relative rounded-2xl border border-slate-200/60 dark:border-slate-700/40 bg-white/70 dark:bg-slate-900/50 shadow-xl p-4">
-            <div className="aspect-video rounded-lg bg-gradient-to-br from-primary-100 to-fuchsia-100 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-center p-6">
+          <motion.div initial={{opacity:0,scale:0.98}} animate={{opacity:1,scale:1}} transition={{delay:0.1,duration:0.6}} className="relative rounded-2xl border border-yellow-200/60 dark:border-yellow-700/40 bg-yellow-50/70 dark:bg-slate-900/50 shadow-xl p-4">
+            <div className="aspect-video rounded-lg bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-center p-6">
               <div>
-                <p className="text-xl font-semibold">Live Preview</p>
-                <p className="mt-2 text-slate-600 dark:text-slate-300">Upload a PDF and jump straight into the editor.</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">Live Preview</p>
+                <p className="mt-2 text-slate-700 dark:text-slate-300">Upload a PDF and jump straight into the editor.</p>
               </div>
             </div>
-            <div className="absolute -inset-1 -z-10 rounded-2xl bg-gradient-to-tr from-primary-400/20 to-fuchsia-400/20 blur-xl"></div>
+            <div className="absolute -inset-1 -z-10 rounded-2xl bg-gradient-to-tr from-yellow-400/20 to-amber-400/20 blur-xl"></div>
           </motion.div>
         </div>
       </section>
