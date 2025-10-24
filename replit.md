@@ -71,6 +71,17 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-24: Complete UI redesign per client specifications
+  - Updated branding to "BRIGHT LINK" with custom logo
+  - Changed color scheme from blue to light green theme
+  - Added "Ivory Free" and "NO Limits" feature badges
+  - Implemented "ALL Tools" navigation menu in header
+  - Added language selector with globe icon
+  - Updated Live Preview section with light yellow background
+  - Created comprehensive footer with links: About Us, FAQ, Help, Contact, Legal, Terms of Use, Privacy Policy, Privacy Settings
+  - Added "It's Completely free, Powered by Ads" message to footer
+  - Updated all buttons to use light green color scheme
+  
 - 2025-10-22: Added page rearrangement feature
   - Implemented collapsible thumbnails sidebar with drag-and-drop page reordering
   - Added toggle button to show/hide page thumbnails
