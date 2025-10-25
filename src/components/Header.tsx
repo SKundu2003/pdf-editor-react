@@ -6,7 +6,7 @@ export default function Header() {
   const [showLanguages, setShowLanguages] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur bg-white/60 dark:bg-slate-900/60 border-b border-slate-200/40 dark:border-slate-700/40">
+    <header className="sticky top-0 z-40 backdrop-blur bg-gradient-to-r from-yellow-50 via-green-50 to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-yellow-200/60 dark:border-slate-700/40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-emerald-600 text-white font-bold text-sm shadow-lg">
@@ -23,11 +23,10 @@ export default function Header() {
         </Link>
         <div className="flex items-center gap-4">
           <nav className="flex items-center gap-1 text-sm">
-            <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
-              <span className="text-xs text-slate-500 dark:text-slate-400 mr-2">ALL Tools</span>
-              <NavLink to="/" className={({isActive}) => `px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 ${isActive ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/50' : ''}`}>Home</NavLink>
-              <NavLink to="/editor" className={({isActive}) => `px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 ${isActive ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/50' : ''}`}>Editor</NavLink>
-              <a href="https://react-pdf.org/" target="_blank" rel="noreferrer" className="px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30">Docs</a>
+            <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 shadow-sm">
+              <span className="text-xs font-medium text-primary-600 dark:text-primary-400 mr-2">ALL Tools</span>
+              <NavLink to="/" className={({isActive}) => `px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 transition ${isActive ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/50 font-medium' : ''}`}>Home</NavLink>
+              <NavLink to="/editor" className={({isActive}) => `px-2 py-1 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 transition ${isActive ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/50 font-medium' : ''}`}>Editor</NavLink>
             </div>
           </nav>
           <div className="relative">
