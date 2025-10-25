@@ -71,6 +71,12 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-25: Header improvements and navigation cleanup
+  - Added beautiful gradient background to header (yellow → green → blue) matching Live Preview style
+  - Removed "Docs" links from navigation (not implemented)
+  - Enhanced "ALL Tools" menu styling with better visual hierarchy
+  - Verified Export functionality works correctly (downloads edited PDF)
+  
 - 2025-10-24: Complete UI redesign per client specifications
   - Updated branding to "BRIGHT LINK" with custom logo
   - Changed color scheme from blue to light green theme
