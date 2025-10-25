@@ -71,6 +71,15 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-25: SEO optimization and Coming Soon page
+  - Implemented comprehensive SEO with meta tags, Open Graph, Twitter cards
+  - Added Schema.org structured data for better search engine understanding
+  - Added SEO-optimized keywords: PDF editor, PDF converter, edit PDF online, merge PDF, compress PDF, etc.
+  - Created Coming Soon page showcasing 12 upcoming features (PDF to Word, PDF to Excel, signatures, etc.)
+  - Added SEO content section on landing page with keywords and user benefits
+  - Updated page titles and meta descriptions dynamically
+  - Fixed Export button to download edited PDF with PDFTron changes
+  
 - 2025-10-25: Header improvements and navigation cleanup
   - Added beautiful gradient background to header (yellow → green → blue) matching Live Preview style
   - Removed "Docs" links from navigation (not implemented)

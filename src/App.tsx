@@ -1,6 +1,7 @@
 import { Route, Routes, Link, useLocation } from 'react-router-dom'
 import LandingPage from '@/pages/LandingPage'
 import EditorPage from '@/pages/EditorPage'
+import ComingSoon from '@/pages/ComingSoon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { PdfProvider } from './context/PdfContext'
@@ -15,6 +16,7 @@ export default function App() {
           <Routes location={location}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/editor" element={<EditorPage />} />
+            <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="*" element={<div className="p-8 text-center">Not Found. <Link to="/" className="text-primary-500 underline">Go home</Link></div>} />
           </Routes>
         </PdfProvider>

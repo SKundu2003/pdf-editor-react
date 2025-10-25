@@ -2,10 +2,20 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import UploadDropzone from '../components/UploadDropzone'
 import { usePdf } from '../context/PdfContext'
+import { useEffect } from 'react'
 
 export default function LandingPage() {
   const navigate = useNavigate()
   const { loadFromFiles } = usePdf()
+
+  // SEO: Update document title and meta description
+  useEffect(() => {
+    document.title = 'Free PDF Editor & Converter Online - Edit, Merge, Convert PDFs | Bright Link'
+    const metaDescription = document.querySelector('meta[name="description"]')
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Edit PDF online free. Convert, merge, compress, and edit PDF files instantly in your browser. No registration required. Fast, secure, and completely free PDF editor with no limits.')
+    }
+  }, [])
 
   const handleFilesSelected = async (files: File[]) => {
     try {
@@ -57,6 +67,49 @@ export default function LandingPage() {
       <section id="upload" className="max-w-4xl mx-auto px-6 pb-16">
         <h2 className="text-2xl font-bold mb-4">Try it now</h2>
         <UploadDropzone onFilesSelected={handleFilesSelected} />
+      </section>
+
+      {/* SEO Content Section */}
+      <section className="max-w-7xl mx-auto px-6 py-16 bg-white dark:bg-slate-900">
+        <div className="prose dark:prose-invert max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold mb-6">The Best Free Online PDF Editor & Converter</h2>
+          
+          <p className="text-lg mb-4">
+            <strong>Bright Link PDF Editor</strong> is your complete solution for editing PDF files online. Whether you need to edit PDF text, merge multiple PDFs, convert PDF to Word, or compress large files, our powerful yet simple tools have you covered.
+          </p>
+
+          <h3 className="text-2xl font-semibold mt-8 mb-4">Why Choose Our PDF Editor?</h3>
+          <ul className="space-y-2 mb-6">
+            <li><strong>100% Free:</strong> No hidden costs, no subscription fees, unlimited usage</li>
+            <li><strong>No Watermarks:</strong> Your documents stay clean and professional</li>
+            <li><strong>Privacy First:</strong> All editing happens in your browser - we never see your files</li>
+            <li><strong>No Registration:</strong> Start editing immediately without creating an account</li>
+            <li><strong>Fast & Modern:</strong> Built with cutting-edge technology for lightning-fast performance</li>
+            <li><strong>All Devices:</strong> Works on desktop, tablet, and mobile browsers</li>
+          </ul>
+
+          <h3 className="text-2xl font-semibold mt-8 mb-4">Powerful PDF Editing Features</h3>
+          <p className="mb-4">
+            Our online PDF editor lets you <strong>edit PDF text directly</strong> - just double-click and start typing like in a word processor. Rearrange pages with drag-and-drop, change text colors and sizes, and export your edited PDF with all changes preserved.
+          </p>
+
+          <h3 className="text-2xl font-semibold mt-8 mb-4">More Tools Coming Soon</h3>
+          <p className="mb-4">
+            We're constantly adding new features including <strong>PDF to Word converter</strong>, <strong>merge PDF files</strong>, <strong>compress PDF</strong>, <strong>PDF to Excel</strong>, and more. <Link to="/coming-soon" className="text-primary-600 hover:underline">See what's coming</Link>.
+          </p>
+
+          <h3 className="text-2xl font-semibold mt-8 mb-4">How to Edit a PDF Online</h3>
+          <ol className="space-y-2 mb-6">
+            <li><strong>1. Upload:</strong> Drag and drop your PDF file or click to select</li>
+            <li><strong>2. Edit:</strong> Click "Text" mode and double-click any text to edit</li>
+            <li><strong>3. Customize:</strong> Change colors, sizes, rearrange pages</li>
+            <li><strong>4. Download:</strong> Click "Export" to download your edited PDF</li>
+          </ol>
+
+          <p className="text-lg font-medium mt-8">
+            Start editing your PDF files today - no software installation required!
+          </p>
+        </div>
       </section>
     </div>
   )
