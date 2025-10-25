@@ -75,12 +75,18 @@ npm run build
   - Redesigned header with larger logo (h-16), gradient text for branding, colorful badge pills
   - Completely rebuilt landing page with modern sections:
     * Hero section with large gradient headline "Edit PDFs Like Magic"
-    * Stats showcase (100% Free, Zero Watermarks, No Registration, ∞ Unlimited)
-    * Feature cards with gradient icons and hover effects
-    * Power features section with detailed descriptions
+    * Stats showcase (100% Free, No Registration, ∞ Unlimited)
+    * Single CTA: "Upload & Edit PDF Now" - direct path to editing
+    * Prominent "Free Forever • Powered by Ads" messaging
+    * Feature cards highlighting advanced capabilities not found elsewhere
+    * "Advanced Features Not Found Elsewhere" section emphasizing unique capabilities
+    * Character-level text editing feature prominently highlighted
+    * Clear explanation of ad-supported free model
     * Step-by-step guide cards
     * CTA section with gradient background
-  - Removed plain text SEO content, replaced with beautiful feature cards
+  - Removed "No Watermarks" claim (PDFTron adds watermarks)
+  - Removed "View All Tools" button (most features coming soon)
+  - Added emphasis on unique advanced features
   - Added Heroicons for professional iconography
   - Improved animations with Framer Motion (fade-in, hover effects)
   - Better spacing, typography, and visual hierarchy throughout

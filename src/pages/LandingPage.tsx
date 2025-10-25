@@ -13,7 +13,9 @@ import {
   SparklesIcon,
   DocumentTextIcon,
   ArrowPathIcon,
-  CloudArrowUpIcon
+  CloudArrowUpIcon,
+  CursorArrowRaysIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
 export default function LandingPage() {
@@ -57,39 +59,35 @@ export default function LandingPage() {
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold bg-gradient-to-r from-slate-900 via-primary-700 to-blue-900 dark:from-white dark:via-primary-400 dark:to-blue-400 bg-clip-text text-transparent leading-tight mb-6">
                 Edit PDFs Like Magic
               </h1>
-              <p className="text-xl sm:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto">
-                The most powerful free online PDF editor. Edit text, rearrange pages, and export - all in your browser with zero compromise.
+              <p className="text-xl sm:text-2xl text-slate-600 dark:text-slate-300 mb-4 max-w-3xl mx-auto">
+                Advanced PDF editing features you won't find anywhere else. Edit text directly, rearrange pages, and customize - all in your browser.
+              </p>
+              <p className="text-lg text-primary-600 dark:text-primary-400 font-semibold mb-8">
+                🎉 Free Forever • Powered by Ads • Always Available at Zero Cost
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a 
                   href="#upload" 
-                  className="group px-8 py-4 rounded-xl bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-semibold text-lg shadow-xl shadow-primary-200 dark:shadow-primary-900/50 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                  className="group px-10 py-5 rounded-xl bg-gradient-to-r from-primary-600 to-emerald-600 text-white font-bold text-xl shadow-xl shadow-primary-200 dark:shadow-primary-900/50 hover:shadow-2xl hover:scale-105 transition-all duration-300"
                 >
-                  Start Editing Free
+                  Upload & Edit PDF Now
                   <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
                 </a>
-                <Link 
-                  to="/coming-soon" 
-                  className="px-8 py-4 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold text-lg border-2 border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-lg transition-all duration-300"
-                >
-                  View All Tools
-                </Link>
               </div>
+              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                No registration required • Start editing in seconds
+              </p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
+              className="mt-16 grid grid-cols-2 md:grid-cols-3 gap-8 max-w-2xl mx-auto"
             >
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">100%</div>
                 <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">Free Forever</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">Zero</div>
-                <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">Watermarks</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">No</div>
@@ -112,7 +110,10 @@ export default function LandingPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl font-bold text-center mb-8">Upload Your PDF & Start Editing</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">Upload Your PDF & Start Editing</h2>
+          <p className="text-center text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
+            Experience advanced PDF editing powered by professional-grade technology. Completely free, supported by ads to keep it available for everyone.
+          </p>
           <UploadDropzone onFilesSelected={handleFilesSelected} />
         </motion.div>
       </section>
@@ -127,27 +128,27 @@ export default function LandingPage() {
         >
           <h2 className="text-4xl font-bold mb-4">Why Choose Bright Linx?</h2>
           <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Experience the most advanced PDF editing tools, completely free with no compromises
+            Advanced features powered by professional PDF technology, completely free and ad-supported
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FeatureCard
             icon={<GiftIcon className="w-8 h-8" />}
-            title="100% Free"
-            description="No hidden costs, no subscription fees, unlimited usage. Everything you need, completely free forever."
+            title="100% Free Forever"
+            description="No hidden costs, no subscriptions. Supported by ads to keep it free for everyone, always."
             gradient="from-emerald-500 to-teal-500"
           />
           <FeatureCard
-            icon={<CheckCircleIcon className="w-8 h-8" />}
-            title="No Watermarks"
-            description="Your documents stay clean and professional. Export PDFs without any watermarks or branding."
+            icon={<CursorArrowRaysIcon className="w-8 h-8" />}
+            title="Direct Text Editing"
+            description="Advanced feature: Double-click to edit PDF text like a word processor. Rare capability most tools don't offer."
             gradient="from-blue-500 to-cyan-500"
           />
           <FeatureCard
             icon={<LockClosedIcon className="w-8 h-8" />}
             title="Privacy First"
-            description="All editing happens in your browser - we never see your files. Your data stays 100% private."
+            description="All editing happens in your browser - we never see your files. Your data stays 100% private and secure."
             gradient="from-purple-500 to-pink-500"
           />
           <FeatureCard
@@ -159,19 +160,19 @@ export default function LandingPage() {
           <FeatureCard
             icon={<BoltIcon className="w-8 h-8" />}
             title="Lightning Fast"
-            description="Built with cutting-edge technology for instant loading and real-time editing. No lag, ever."
+            description="Professional-grade PDF engine for instant loading and real-time editing. No lag, ever."
             gradient="from-yellow-500 to-amber-500"
           />
           <FeatureCard
             icon={<DevicePhoneMobileIcon className="w-8 h-8" />}
-            title="All Devices"
-            description="Works perfectly on desktop, tablet, and mobile browsers. Edit PDFs anywhere, anytime."
+            title="Works Everywhere"
+            description="Desktop, tablet, and mobile browsers. Edit PDFs anywhere, anytime, on any device."
             gradient="from-indigo-500 to-purple-500"
           />
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Advanced Features Section */}
       <section className="max-w-7xl mx-auto px-6 py-20 bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-900/50 dark:to-blue-900/10 rounded-3xl my-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -179,38 +180,50 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold mb-4">Powerful Editing Features</h2>
-          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Everything you need to edit PDFs like a pro, right in your browser
+          <h2 className="text-4xl font-bold mb-4">Advanced Features Not Found Elsewhere</h2>
+          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+            Powered by professional PDF technology, these advanced capabilities set us apart from basic online editors
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <PowerFeature
-            icon={<DocumentTextIcon className="w-10 h-10" />}
-            title="Direct Text Editing"
-            description="Double-click any text to edit it like a notepad. Change content, fix typos, and update documents in seconds."
-            features={['Character-level editing', 'Font size control', 'Color customization', 'Real-time preview']}
+            icon={<PencilSquareIcon className="w-10 h-10" />}
+            title="Character-Level Text Editing"
+            description="Industry-leading feature: Edit PDF text character-by-character like a notepad. Most online editors only let you add annotations - we let you actually edit the text itself."
+            features={['Double-click any text to edit', 'Backspace to delete characters', 'Type directly into PDFs', 'Real-time preview of changes']}
           />
           <PowerFeature
             icon={<ArrowPathIcon className="w-10 h-10" />}
-            title="Drag & Drop Pages"
-            description="Rearrange PDF pages with smooth drag-and-drop. Reorder your document structure effortlessly."
-            features={['Visual thumbnails', 'Instant reordering', 'Page navigation', 'Collapsible sidebar']}
+            title="Visual Page Reordering"
+            description="Professional drag-and-drop page management with live thumbnails. Rearrange your entire document structure effortlessly."
+            features={['Collapsible sidebar view', 'Drag pages to reorder', 'Visual thumbnail preview', 'Click to navigate pages']}
           />
           <PowerFeature
             icon={<SparklesIcon className="w-10 h-10" />}
-            title="Advanced Formatting"
-            description="Take control of your PDF's appearance with professional formatting tools and customization options."
-            features={['Text colors', 'Size adjustments', 'Style controls', 'Layer management']}
+            title="Advanced Text Formatting"
+            description="Professional-grade text customization controls rarely found in free online tools. Take full control of your document's appearance."
+            features={['Change text colors', 'Adjust font sizes', 'Multiple editing modes', 'Layer-based editing']}
           />
           <PowerFeature
             icon={<CloudArrowUpIcon className="w-10 h-10" />}
-            title="Export Perfection"
-            description="Download your edited PDF with all changes preserved. Perfect quality, zero watermarks, every time."
-            features={['High-quality output', 'All edits saved', 'No watermarks', 'Instant download']}
+            title="Professional Export Quality"
+            description="Download your edited PDF with all changes perfectly preserved using enterprise-grade PDF processing technology."
+            features={['High-fidelity output', 'All edits preserved', 'Professional quality', 'Instant download']}
           />
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center p-8 bg-white dark:bg-slate-800 rounded-2xl border border-primary-200 dark:border-primary-700"
+        >
+          <p className="text-lg text-slate-700 dark:text-slate-300">
+            <span className="font-bold text-primary-600 dark:text-primary-400">Why is this free? </span>
+            We're supported by ads to keep these advanced features available to everyone at zero cost. No tricks, no limits - just powerful tools for free, forever.
+          </p>
+        </motion.div>
       </section>
 
       {/* How It Works */}
@@ -260,15 +273,38 @@ export default function LandingPage() {
           className="bg-gradient-to-r from-primary-600 to-emerald-600 rounded-3xl p-12 text-center text-white shadow-2xl"
         >
           <h2 className="text-4xl font-bold mb-4">Ready to Edit Your PDFs?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of users editing PDFs for free. No software installation required!
+          <p className="text-xl mb-2 opacity-90">
+            Join thousands using advanced PDF editing features - completely free!
+          </p>
+          <p className="text-lg mb-8 opacity-75">
+            Ad-supported to keep it free forever. No software installation required.
           </p>
           <a 
             href="#upload" 
             className="inline-block px-10 py-4 bg-white text-primary-600 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
           >
-            Start Editing Now - It's Free!
+            Upload & Start Editing Now - It's Free!
           </a>
+        </motion.div>
+      </section>
+
+      {/* Coming Soon Link */}
+      <section className="max-w-5xl mx-auto px-6 pb-20 text-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            Want to see what other tools we're building?
+          </p>
+          <Link 
+            to="/coming-soon" 
+            className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition"
+          >
+            View upcoming features
+            <span>→</span>
+          </Link>
         </motion.div>
       </section>
     </div>
