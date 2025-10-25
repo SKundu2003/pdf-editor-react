@@ -9,11 +9,13 @@ export default function Header() {
     <header className="sticky top-0 z-40 backdrop-blur bg-gradient-to-r from-yellow-50 via-green-50 to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-b border-yellow-200/60 dark:border-slate-700/40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-emerald-600 text-white font-bold text-sm shadow-lg">
-            BL
-          </span>
+          <img 
+            src="/brightlinx-logo.jpg" 
+            alt="Bright Linx Logo" 
+            className="h-12 w-auto object-contain"
+          />
           <div className="flex flex-col">
-            <span className="font-bold text-lg leading-tight">BRIGHT LINK</span>
+            <span className="font-bold text-lg leading-tight text-red-600">BRIGHT LINX</span>
             <span className="text-xs text-slate-600 dark:text-slate-400">PDF Converter & Editor</span>
           </div>
           <div className="hidden md:flex items-center gap-2 ml-3">

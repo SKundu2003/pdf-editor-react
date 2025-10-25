@@ -10,7 +10,7 @@ export default function LandingPage() {
 
   // SEO: Update document title and meta description
   useEffect(() => {
-    document.title = 'Free PDF Editor & Converter Online - Edit, Merge, Convert PDFs | Bright Link'
+    document.title = 'Free PDF Editor & Converter Online - Edit, Merge, Convert PDFs | Bright Linx'
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Edit PDF online free. Convert, merge, compress, and edit PDF files instantly in your browser. No registration required. Fast, secure, and completely free PDF editor with no limits.')
@@ -75,7 +75,7 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold mb-6">The Best Free Online PDF Editor & Converter</h2>
           
           <p className="text-lg mb-4">
-            <strong>Bright Link PDF Editor</strong> is your complete solution for editing PDF files online. Whether you need to edit PDF text, merge multiple PDFs, convert PDF to Word, or compress large files, our powerful yet simple tools have you covered.
+            <strong>Bright Linx PDF Editor</strong> is your complete solution for editing PDF files online. Whether you need to edit PDF text, merge multiple PDFs, convert PDF to Word, or compress large files, our powerful yet simple tools have you covered.
           </p>
 
           <h3 className="text-2xl font-semibold mt-8 mb-4">Why Choose Our PDF Editor?</h3>

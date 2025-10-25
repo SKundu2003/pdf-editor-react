@@ -37,7 +37,7 @@ export default function Footer() {
         <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              © {new Date().getFullYear()} PDF Converter & Editor
+              © {new Date().getFullYear()} Bright Linx Allied Ventures
             </p>
             <p className="text-sm font-medium text-primary-600 dark:text-primary-400 flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

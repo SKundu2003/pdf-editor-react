@@ -71,6 +71,12 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-25: Branding update to Bright Linx Allied Ventures
+  - Updated all branding from "BRIGHT LINK" to "BRIGHT LINX"
+  - Integrated official Bright Linx logo image in header
+  - Updated company name to "Bright Linx Allied Ventures"
+  - Updated all SEO meta tags and structured data with correct branding
+  
 - 2025-10-25: SEO optimization and Coming Soon page
   - Implemented comprehensive SEO with meta tags, Open Graph, Twitter cards
   - Added Schema.org structured data for better search engine understanding
@@ -87,7 +93,7 @@ npm run build
   - Verified Export functionality works correctly (downloads edited PDF)
   
 - 2025-10-24: Complete UI redesign per client specifications
-  - Updated branding to "BRIGHT LINK" with custom logo
+  - Updated branding to "BRIGHT LINX" with custom logo
   - Changed color scheme from blue to light green theme
   - Added "Ivory Free" and "NO Limits" feature badges
   - Implemented "ALL Tools" navigation menu in header
