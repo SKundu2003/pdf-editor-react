@@ -30,6 +30,24 @@ const PdfViewer = ({
   const { onDocumentLoad } = usePdfState();
   const [initError, setInitError] = useState<string | null>(null);
 
+  // Expose method to get edited PDF bytes
+  useEffect(() => {
+    if (instanceRef.current) {
+      (window as any).getPDFTronEditedBytes = async () => {
+        const { Core } = instanceRef.current;
+        const { documentViewer, annotationManager } = Core;
+        const doc = documentViewer.getDocument();
+        const xfdfString = await annotationManager.exportAnnotations();
+        const data = await doc.getFileData({ xfdfString, flatten: true });
+        const arr = new Uint8Array(data);
+        return arr;
+      };
+    }
+    return () => {
+      delete (window as any).getPDFTronEditedBytes;
+    };
+  }, []);
+
   useEffect(() => {
     const element = viewerDiv.current;
     if (!element) {

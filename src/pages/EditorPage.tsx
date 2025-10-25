@@ -109,6 +109,15 @@ export default function EditorPage() {
   async function handleExport() {
     setError(null)
     try {
+      // Try to get edited bytes from PDFTron viewer first
+      if ((window as any).getPDFTronEditedBytes) {
+        const editedBytes = await (window as any).getPDFTronEditedBytes()
+        if (editedBytes) {
+          downloadBytesAsFile(editedBytes, 'edited.pdf')
+          return
+        }
+      }
+      // Fallback to original export method
       const out = await exportEdited()
       if (!out) throw new Error('Nothing to export')
       downloadBytesAsFile(out, 'edited.pdf')
