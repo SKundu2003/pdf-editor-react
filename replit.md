@@ -71,6 +71,21 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-25: Complete UI/UX redesign for professional appearance
+  - Redesigned header with larger logo (h-16), gradient text for branding, colorful badge pills
+  - Completely rebuilt landing page with modern sections:
+    * Hero section with large gradient headline "Edit PDFs Like Magic"
+    * Stats showcase (100% Free, Zero Watermarks, No Registration, ∞ Unlimited)
+    * Feature cards with gradient icons and hover effects
+    * Power features section with detailed descriptions
+    * Step-by-step guide cards
+    * CTA section with gradient background
+  - Removed plain text SEO content, replaced with beautiful feature cards
+  - Added Heroicons for professional iconography
+  - Improved animations with Framer Motion (fade-in, hover effects)
+  - Better spacing, typography, and visual hierarchy throughout
+  - Modern gradients, shadows, and rounded corners for premium look
+  
 - 2025-10-25: Branding update to Bright Linx Allied Ventures
   - Updated all branding from "BRIGHT LINK" to "BRIGHT LINX"
   - Integrated official Bright Linx logo image in header
