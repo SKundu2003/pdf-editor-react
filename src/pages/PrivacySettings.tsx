@@ -38,11 +38,19 @@ export default function PrivacySettings() {
   const handleAcceptAll = () => {
     setAnalyticsEnabled(true)
     setAdPersonalizationEnabled(true)
+    localStorage.setItem('analyticsEnabled', 'true')
+    localStorage.setItem('adPersonalizationEnabled', 'true')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
   const handleRejectAll = () => {
     setAnalyticsEnabled(false)
     setAdPersonalizationEnabled(false)
+    localStorage.setItem('analyticsEnabled', 'false')
+    localStorage.setItem('adPersonalizationEnabled', 'false')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
   return (

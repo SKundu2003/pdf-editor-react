@@ -19,8 +19,19 @@ export default function Contact() {
     }
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    const emailData = {
+      to: 'support@brightlinx.in',
+      from: formData.email,
+      subject: `[${formData.subject}] ${formData.name}`,
+      message: formData.message,
+      timestamp: new Date().toISOString()
+    }
+    
+    console.log('Contact form submission:', emailData)
+    
     setSubmitted(true)
     setTimeout(() => {
       setSubmitted(false)

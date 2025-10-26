@@ -104,15 +104,22 @@ export default function PrivacyPolicy() {
             </p>
           </Section>
 
-          <Section title="4. Third-Party Services">
+          <Section title="4. Third-Party Services & Advertising">
             <p>
-              <strong>Advertising:</strong> Our free service is supported by advertisements. Third-party advertising partners may use cookies and similar technologies to serve relevant ads. These partners have their own privacy policies:
+              <strong>Google AdSense & Advertising Partners:</strong> Brightlinx.in is supported by Google AdSense and other third-party advertising partners to keep our service completely free. Here's what you need to know:
             </p>
-            <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Google AdSense - <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Policy</a></li>
-              <li>We do not share any of your document data with advertisers</li>
-              <li>Ad networks only collect standard web analytics (not your files)</li>
+            <ul className="list-disc pl-6 mt-2 space-y-2">
+              <li><strong>Ad Serving:</strong> We use Google AdSense to display advertisements on our website</li>
+              <li><strong>Cookies & Tracking:</strong> Third-party advertising partners may use cookies and similar technologies to serve personalized ads based on your interests</li>
+              <li><strong>Your Documents Are Safe:</strong> We do not share any of your PDF files or document data with advertisers. Ad networks only collect standard web analytics</li>
+              <li><strong>Google Privacy Policy:</strong> <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">View Google's Privacy Policy</a></li>
+              <li><strong>Manage Ad Preferences:</strong> You can control ad personalization in our <a href="/privacy-settings" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Settings</a> or via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Google Ad Settings</a></li>
             </ul>
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+                Important: Advertisements help us keep Brightlinx free forever. By using our service, you consent to the use of cookies by Google AdSense and our advertising partners as described in this policy.
+              </p>
+            </div>
             <p className="mt-4">
               <strong>Content Delivery Networks (CDN):</strong> We use CDNs to deliver JavaScript libraries and fonts. These are industry-standard services that do not access your documents.
             </p>

@@ -98,9 +98,12 @@ export default function Footer() {
               Free Forever • Powered by Ads
             </p>
           </div>
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <p className="text-xs text-slate-500 dark:text-slate-500">
               Your files are processed in your browser. We never upload or store your documents.
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-500">
+              This site is supported by Google AdSense and third-party advertising partners. <Link to="/privacy-settings" className="underline hover:text-primary-600">Manage ad preferences</Link>
             </p>
           </div>
         </div>
