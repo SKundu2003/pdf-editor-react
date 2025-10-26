@@ -71,6 +71,13 @@ npm run build
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
 ## Recent Changes
+- 2025-10-26: Updated branding with new logo and name images
+  - Replaced logo with new blue circular design
+  - Replaced text-based "BRIGHT LINX" with official BRIGHTLINX name image
+  - Increased header height to h-24 for better logo visibility
+  - Enhanced header with drop shadows and improved spacing
+  - Professional banner design with official branding assets
+  
 - 2025-10-25: Complete UI/UX redesign for professional appearance
   - Redesigned header with larger logo (h-16), gradient text for branding, colorful badge pills
   - Completely rebuilt landing page with modern sections:
