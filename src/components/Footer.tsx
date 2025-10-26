@@ -74,14 +74,6 @@ export default function Footer() {
                   Privacy Policy
                 </Link>
               </li>
-              <li>
-                <Link 
-                  to="/privacy-settings" 
-                  className="text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                >
-                  Privacy Settings
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
@@ -103,7 +95,7 @@ export default function Footer() {
               Your files are processed in your browser. We never upload or store your documents.
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-500">
-              This site is supported by Google AdSense and third-party advertising partners. <Link to="/privacy-settings" className="underline hover:text-primary-600">Manage ad preferences</Link>
+              This site is supported by Google AdSense and third-party advertising partners. Visit <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary-600">Google Ad Settings</a> to manage preferences.
             </p>
           </div>
         </div>

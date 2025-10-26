@@ -84,7 +84,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc pl-6 mt-2 space-y-2">
               <li><strong>Analytics Data:</strong> We use privacy-friendly analytics to understand website traffic, such as page views and general usage patterns. This data is completely anonymous and cannot be traced back to you.</li>
               <li><strong>Technical Information:</strong> Basic technical data like browser type, device type, and operating system to optimize our service for all users.</li>
-              <li><strong>Cookies:</strong> We use minimal cookies for essential functionality and anonymous analytics. See our <a href="/privacy-settings" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Settings</a> page to manage cookie preferences.</li>
+              <li><strong>Cookies:</strong> We use minimal cookies for essential functionality and anonymous analytics. You can manage cookie preferences through your browser settings.</li>
             </ul>
           </Section>
 
@@ -113,7 +113,7 @@ export default function PrivacyPolicy() {
               <li><strong>Cookies & Tracking:</strong> Third-party advertising partners may use cookies and similar technologies to serve personalized ads based on your interests</li>
               <li><strong>Your Documents Are Safe:</strong> We do not share any of your PDF files or document data with advertisers. Ad networks only collect standard web analytics</li>
               <li><strong>Google Privacy Policy:</strong> <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">View Google's Privacy Policy</a></li>
-              <li><strong>Manage Ad Preferences:</strong> You can control ad personalization in our <a href="/privacy-settings" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Settings</a> or via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Google Ad Settings</a></li>
+              <li><strong>Manage Ad Preferences:</strong> You can control ad personalization via <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Google Ad Settings</a></li>
             </ul>
             <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
               <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">
@@ -142,9 +142,9 @@ export default function PrivacyPolicy() {
               You have full control over your privacy:
             </p>
             <ul className="list-disc pl-6 mt-2 space-y-2">
-              <li><strong>Cookie Management:</strong> Visit our <a href="/privacy-settings" className="text-primary-600 dark:text-primary-400 hover:underline">Privacy Settings</a> page to control cookies</li>
-              <li><strong>Opt-Out of Analytics:</strong> You can disable analytics cookies at any time</li>
-              <li><strong>Ad Settings:</strong> Manage personalized ads through your browser settings or Google Ad Settings</li>
+              <li><strong>Cookie Management:</strong> You can control cookies through your browser settings</li>
+              <li><strong>Opt-Out of Analytics:</strong> You can disable analytics cookies through your browser settings at any time</li>
+              <li><strong>Ad Settings:</strong> Manage personalized ads through <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-primary-600 dark:text-primary-400 hover:underline">Google Ad Settings</a></li>
               <li><strong>Do Not Track:</strong> We respect browser "Do Not Track" signals</li>
             </ul>
           </Section>

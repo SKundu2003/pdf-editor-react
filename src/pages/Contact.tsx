@@ -23,7 +23,7 @@ export default function Contact() {
     e.preventDefault()
     
     const emailData = {
-      to: 'support@brightlinx.in',
+      to: 'brightlinx.allied@gmail.com',
       from: formData.email,
       subject: `[${formData.subject}] ${formData.name}`,
       message: formData.message,
@@ -67,7 +67,7 @@ export default function Contact() {
           <ContactCard
             icon={<EnvelopeIcon className="w-8 h-8" />}
             title="Email Us"
-            info="support@brightlinx.in"
+            info="brightlinx.allied@gmail.com"
             description="We'll respond within 24-48 hours"
             gradient="from-blue-500 to-cyan-500"
           />

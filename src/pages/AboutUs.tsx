@@ -91,30 +91,51 @@ export default function AboutUs() {
             innovative online PDF solutions that simplify digital document management for everyone.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-12"
+          >
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-3xl p-10 border-4 border-amber-200 dark:border-amber-700 shadow-2xl">
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-500 via-yellow-500 to-orange-500 flex items-center justify-center text-white text-5xl font-bold mb-6 shadow-lg">
+                  SK
+                </div>
+                <h3 className="text-3xl font-extrabold text-center mb-3 bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                  Mr. Samrat Kundu
+                </h3>
+                <p className="text-xl font-bold text-amber-900 dark:text-amber-300 mb-4 uppercase tracking-wide">
+                  Founder & Primary Focus
+                </p>
+                <p className="text-lg text-slate-700 dark:text-slate-300 text-center max-w-2xl leading-relaxed">
+                  The visionary founder and main driving force behind Brightlinx. Mr. Samrat Kundu's leadership, 
+                  strategic vision, and unwavering commitment laid the foundation for this innovative platform, 
+                  making PDF management accessible to everyone, everywhere.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <TeamMember
-              name="Mr. Samrat Kundu"
-              role="Visionary & Concept Creator"
-              description="The creative mind behind Brightlinx, whose vision and foresight laid the foundation for the platform."
-              gradient="from-primary-500 to-emerald-500"
+              name="Souvik Kundu"
+              role="Technical Lead & Developer"
+              description="The technical mastermind who developed and coded the entire platform, transforming the vision into a fully functional, cutting-edge PDF editing solution."
+              gradient="from-blue-600 to-cyan-600"
             />
             <TeamMember
               name="Mr. Srijeet Mondal"
-              role="Strategic & Technical Lead"
-              description="Contributed strategic and technical expertise to enhance functionality and user experience."
-              gradient="from-blue-500 to-cyan-500"
-            />
-            <TeamMember
-              name="Mr. Souvik Kundu"
-              role="Design & Implementation"
-              description="Transformed the vision into reality through exceptional design sense and technical implementation."
-              gradient="from-purple-500 to-pink-500"
+              role="Strategic & UX Expert"
+              description="Contributed strategic insights and UX expertise to enhance the website's functionality, ensuring an intuitive and seamless user experience."
+              gradient="from-purple-600 to-pink-600"
             />
           </div>
 
-          <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed text-center">
-            Together, this talented trio combined <strong>imagination</strong>, <strong>coordination</strong>, 
-            and <strong>innovation</strong> to create a platform that stands for simplicity, speed, and security in PDF management.
+          <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed text-center mt-8">
+            Together, this talented team combined <strong>visionary leadership</strong>, <strong>technical excellence</strong>, 
+            and <strong>strategic innovation</strong> to create a platform that stands for simplicity, speed, and security in PDF management.
           </p>
         </motion.div>
 
