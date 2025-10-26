@@ -19,10 +19,17 @@ A modern PDF editor built with React, Vite, and PDFTron WebViewer that allows di
 │   │   ├── PdfViewer.tsx  # Main PDF viewer component
 │   │   ├── TextEditor.tsx # Text editing functionality
 │   │   ├── Toolbar.tsx    # Editor toolbar
-│   │   └── ...
+│   │   ├── Header.tsx     # Site header with navigation
+│   │   └── Footer.tsx     # Site footer with links
 │   ├── pages/             # Page components
-│   │   ├── LandingPage.tsx
-│   │   └── EditorPage.tsx
+│   │   ├── LandingPage.tsx      # Main homepage
+│   │   ├── EditorPage.tsx       # PDF editor interface
+│   │   ├── ComingSoon.tsx       # Upcoming features showcase
+│   │   ├── AboutUs.tsx          # Company information
+│   │   ├── Contact.tsx          # Contact form and info
+│   │   ├── TermsOfUse.tsx       # Terms and conditions
+│   │   ├── PrivacyPolicy.tsx    # Privacy policy (Google AdSense compliant)
+│   │   └── PrivacySettings.tsx  # Cookie/privacy preferences
 │   ├── services/          # Business logic
 │   │   ├── pdfService.ts
 │   │   └── pdfTronService.ts
@@ -70,7 +77,30 @@ npm run build
 - PDFTron WebViewer runs in demo mode (watermarks) without license key
 - Optional: Set `VITE_PDFTRON_LICENSE_KEY` environment variable for production use
 
+## Google AdSense Compliance
+The application is ready for Google AdSense approval with:
+- **Privacy Policy**: Comprehensive privacy policy with explicit Google AdSense disclosure
+- **Terms of Use**: Clear terms and conditions for service usage
+- **Privacy Settings**: User-controlled cookie and ad personalization preferences with localStorage persistence
+- **Contact Page**: Functional contact form with validation
+- **About Us**: Company information and transparency
+- **Footer Disclosure**: Clear messaging about ad-supported free service
+- All pages include proper SEO meta tags and structured data
+
 ## Recent Changes
+- 2025-10-26: Created comprehensive legal and informational pages for Google AdSense compliance
+  - **About Us**: Company story, mission, team information with professional gradient design
+  - **Contact**: Functional contact form with email/location/hours, FAQs, submission logging
+  - **Terms of Use**: Comprehensive legal terms covering service usage, intellectual property, disclaimers
+  - **Privacy Policy**: Detailed privacy policy with explicit Google AdSense disclosure and GDPR compliance
+  - **Privacy Settings**: User-controlled cookie/ad preferences with immediate localStorage persistence
+  - **Footer**: Updated with all navigation links and explicit ad disclosure
+  - **App Routing**: All pages properly routed and accessible
+  - **SEO**: All pages include proper meta tags for search engine optimization
+  - Fixed Privacy Settings Accept All/Reject All to immediately persist user preferences
+  - Added explicit Google AdSense disclosure throughout Privacy Policy and Footer
+  - Contact form now logs submissions with structured data for future email integration
+  
 - 2025-10-26: Updated branding with new logo and name images
   - Replaced logo with new blue circular design
   - Replaced text-based "BRIGHT LINX" with official BRIGHTLINX name image
