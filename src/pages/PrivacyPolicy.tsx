@@ -176,12 +176,8 @@ export default function PrivacyPolicy() {
 
           <Section title="10. Contact Us">
             <p>
-              If you have any questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us:
+              If you have any questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us at <a href="mailto:brightlinx.allied@gmail.com" className="text-primary-600 dark:text-primary-400 hover:underline font-semibold">brightlinx.allied@gmail.com</a>
             </p>
-            <div className="mt-4 space-y-2">
-              <p><strong>Email:</strong> <a href="mailto:privacy@brightlinx.in" className="text-primary-600 dark:text-primary-400 hover:underline">privacy@brightlinx.in</a></p>
-              <p><strong>Legal Inquiries:</strong> <a href="mailto:legal@brightlinx.in" className="text-primary-600 dark:text-primary-400 hover:underline">legal@brightlinx.in</a></p>
-            </div>
           </Section>
 
           <div className="mt-12 p-6 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-2xl border border-primary-200 dark:border-primary-700">
