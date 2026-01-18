@@ -6,6 +6,7 @@ import PdfViewer from '../components/PdfViewer'
 import UploadDropzone from '../components/UploadDropzone'
 import PageThumbnails from '../components/PageThumbnails'
 import { usePdf } from '../context/PdfContext'
+import { removeWatermarksFromPdf } from '../utils/watermarkRemover'
 import { downloadBytesAsFile } from '../utils/download'
 import ErrorBoundary from '../components/ErrorBoundary'
 
@@ -106,23 +107,68 @@ export default function EditorPage() {
 
   const previewAnnotations = React.useMemo(() => annotations, [annotations])
 
-  async function handleExport() {
+  async function handleDownloadWithWatermark() {
     setError(null)
     try {
       // Try to get edited bytes from PDFTron viewer first
       if ((window as any).getPDFTronEditedBytes) {
         const editedBytes = await (window as any).getPDFTronEditedBytes()
         if (editedBytes) {
-          downloadBytesAsFile(editedBytes, 'edited.pdf')
+          await downloadBytesAsFile(editedBytes, 'edited.pdf', 'application/pdf', {
+            removeWatermarks: false
+          })
           return
         }
       }
       // Fallback to original export method
       const out = await exportEdited()
       if (!out) throw new Error('Nothing to export')
-      downloadBytesAsFile(out, 'edited.pdf')
+      await downloadBytesAsFile(out, 'edited.pdf', 'application/pdf', {
+        removeWatermarks: false
+      })
     } catch (e: any) {
-      setError(e?.message || 'Failed to export PDF')
+      setError(e?.message || 'Failed to download PDF')
+    }
+  }
+
+  async function handleDownloadWithoutWatermark() {
+    setError(null)
+    try {
+      console.log('Starting enhanced watermark removal process...')
+
+      // Try to get edited bytes from PDFTron viewer first
+      if ((window as any).getPDFTronEditedBytes) {
+        const editedBytes = await (window as any).getPDFTronEditedBytes()
+        if (editedBytes) {
+          console.log('Processing PDFTron edited bytes with enhanced watermark removal...')
+          const cleanedBytes = await removeWatermarksFromPdf(editedBytes, {
+            method: 'background',
+            sensitivity: 0.7,
+            opacity: 0.3
+          })
+          await downloadBytesAsFile(cleanedBytes, 'edited_clean.pdf', 'application/pdf', {
+            removeWatermarks: false // Already processed
+          })
+          return
+        }
+      }
+
+      // Fallback to original export method
+      const out = await exportEdited()
+      if (!out) throw new Error('Nothing to export')
+
+      console.log('Processing exported PDF with enhanced watermark removal...')
+      const cleanedBytes = await removeWatermarksFromPdf(out, {
+        method: 'background',
+        sensitivity: 0.7,
+        opacity: 0.3
+      })
+
+      await downloadBytesAsFile(cleanedBytes, 'edited_clean.pdf', 'application/pdf', {
+        removeWatermarks: false // Already processed
+      })
+    } catch (e: any) {
+      setError(e?.message || 'Failed to download PDF')
     }
   }
 
@@ -166,7 +212,8 @@ export default function EditorPage() {
         setTextColor={setTextColor}
         textSize={textSize}
         setTextSize={setTextSize}
-        onExport={handleExport}
+        onDownloadWithWatermark={handleDownloadWithWatermark}
+        onDownloadWithoutWatermark={handleDownloadWithoutWatermark}
         canExport={canExport}
         onClearAll={loadedPdfs.length > 0 ? clearAllPdfs : undefined}
       />

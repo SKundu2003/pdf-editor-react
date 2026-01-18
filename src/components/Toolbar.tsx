@@ -9,6 +9,7 @@ import {
   ArrowDownTrayIcon,
   TrashIcon
 } from '@heroicons/react/24/outline'
+import DownloadMenu from './DownloadMenu'
 
 interface ToolbarProps {
   onOpenFiles: (files: File[]) => void
@@ -24,7 +25,8 @@ interface ToolbarProps {
   setTextColor: (color: string) => void
   textSize: number
   setTextSize: (size: number) => void
-  onExport: () => void
+  onDownloadWithWatermark: () => void
+  onDownloadWithoutWatermark: () => void
   canExport: boolean
   onClearAll?: () => void
 }
@@ -43,7 +45,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   setTextColor,
   textSize,
   setTextSize,
-  onExport,
+  onDownloadWithWatermark,
+  onDownloadWithoutWatermark,
   canExport,
   onClearAll
 }) => {
@@ -85,14 +88,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
             />
           </label>
 
-          <button
-            onClick={onExport}
+          <DownloadMenu
+            onDownloadWithWatermark={onDownloadWithWatermark}
+            onDownloadWithoutWatermark={onDownloadWithoutWatermark}
             disabled={!canExport}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-            Export
-          </button>
+          />
 
           {onClearAll && (
             <button
